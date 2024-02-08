@@ -1,0 +1,894 @@
+<script setup lang="ts">
+import { ref, onMounted, reactive } from 'vue'
+import axios from 'axios'
+import type { IPump } from "../types/IPump"
+import type { IPumpSelect } from "../types/IPumpSelect"
+import { BubbleChart, useBubbleChart } from "vue-chart-3"
+import { Chart, registerables } from 'chart.js'
+import ChartAnnotation from 'chartjs-plugin-annotation'
+import { API } from "../api/api"
+import { usePDF } from 'vue3-pdfmake'
+import Logo from '../assets/image/logo2.png'
+import { useToastStore } from '../stores/toastStore'
+const useStore = useToastStore()
+
+import { pdfGenerate } from "../services/pdfGenerate"
+
+// @ts-ignore
+const pdfmake = usePDF({
+  autoInstallVFS: true
+})
+
+interface ITypeCalc {
+  image: string,
+  type: string
+}
+
+
+const pumpSelect = reactive<IPumpSelect>({
+  type: 'Любой',
+  image: '../api/image/image_all.jpg',
+  pumpX: null,
+  pumpY: null,
+})
+
+const message = reactive({
+  title: '',
+  text: ''
+})
+
+const pumps = ref<IPump[]>([])
+const pumpsEvent = ref<IPump[]>([])
+const pumpsEventModal = ref<IPump[]>([])
+const loading = ref(false)
+const itemPump = ref<IPump | null>(null)
+const coordinates = ref<any[]>([])
+const errorModal = ref<boolean>(false)
+const pumpsModal = ref<boolean>(false)
+const messageModal = ref<boolean>(false)
+const messageTextForSend = ref<string>('')
+const loadingPdf = ref<boolean>(false)
+
+
+const date = new Date().toLocaleDateString('ru-RU')
+
+// преобразование  формулы
+function formulaCreate(formula: string, x: string, name: string) {
+  try {
+    return eval(formula.replace(/x/g, x))
+  } catch (err) {
+    console.log(err)
+         useStore.showToast({ type: 'error', title: 'Ошибка!', text: `Не  верная формула в насосе ${name}` })
+    return
+  }
+}
+
+function isWqaName(name: string | undefined) {
+  if (name && name.indexOf("WQA")) {
+    let newName = name.replace('-', '').replace('-', '')
+    return newName
+  } else {
+    return name
+  }
+}
+
+const newarray = ref<IPump[] | []>([])
+
+const findPump = () => {
+
+  newarray.value = []
+  if (!pumpSelect.pumpY || !pumpSelect.pumpX || pumpSelect.pumpY == 0 || pumpSelect.pumpX == 0) {
+    message.text = 'Введите рабочую характеристику насосного агрегата'
+    message.title = 'Характеристика не задана'
+    errorModal.value = true
+    return
+  }
+
+  let temp = pumpsEvent.value
+
+  if (pumpSelect.type == 'Любой') {
+    pumpsEvent.value = pumps.value
+  } else {
+    pumpsEvent.value = pumps.value.filter(el => el.type == pumpSelect.type)
+  }
+
+  if (pumpSelect.pumpX) {
+    pumpsEvent.value.forEach(elem => {
+      // @ts-ignore
+      let pointPumpY = formulaCreate(elem.formuls, pumpSelect.pumpX.toString(), elem.name)
+
+
+
+      if (pumpSelect.pumpX && pumpSelect?.pumpY && elem?.error && elem?.start && elem?.finish &&
+        pumpSelect?.pumpY <= pointPumpY + +elem?.error &&
+        pumpSelect?.pumpY >= pointPumpY - +elem?.error &&
+        pumpSelect.pumpX <= +elem?.finish + +elem?.error &&
+        pumpSelect.pumpX >= +elem?.start - +elem?.error
+      ) {
+        // @ts-ignore
+        newarray.value.push(elem)
+      }
+
+
+    }
+    )
+
+    if (newarray.value.length <= 0) {
+      message.title = 'Нет подходящего насосного агрегата'
+      message.text = 'Рабочая характеристика не соответствует имеющимся насосным агрегатам, введите другую рабочую характеристику'
+      errorModal.value = true
+
+      pumpsEvent.value = temp
+      return
+    }
+
+ 
+    pumpsEvent.value = [...newarray.value]
+
+
+  }
+}
+
+const types = ref<ITypeCalc[]>([
+  {
+    image: "../api/image/image_all.jpg",
+    type: "Любой",
+  },
+])
+
+
+const loadAllPump = async () => {
+  loading.value = true
+  fetch(`${API}/api/pump/read.php`)
+    .then((response) => response.json())
+    .then((data) => {
+
+      for (let i = 0; i < data.data.length; i++) {
+        const obj = data.data[i]
+        for (let key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            // @ts-ignore
+            if (obj[key] == "" | obj[key] == null | obj[key] == "null") {
+              // @ts-ignore
+              obj[key] = "---"
+            }
+          }
+        }
+      }
+
+      pumps.value = data.data
+      loading.value = false
+      loadTypes()
+    })
+}
+
+const loadTypes = async () => {
+  axios.get(`${API}api/type/read.php`)
+    .then((data) => (types.value = [...types.value, ...data.data.data]))
+}
+
+
+
+
+
+onMounted(() => {
+  // Chart.register(ChartAnnotation, ...registerables)
+
+  loadAllPump()
+
+
+  // options.plugins = { ...options.plugins, annotation: ChartAnnotation }
+
+
+
+})
+
+
+const options = reactive({
+  aspectRatio: 1,
+  maintainAspectRatio: true,
+  responsive: true,
+  scales: {
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'H(m)',
+      },
+      min: 0,
+      max: 50
+    },
+    x: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Q(м³/h)',
+      },
+      min: 0,
+      max: 50
+    },
+  },
+  plugins: {
+    tooltip: {
+      caretPadding: 10,
+      callbacks: {
+        label: function (context: any) {
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          return label
+        }
+      }
+    },
+    annotation: {
+
+    }
+  },
+
+})
+
+Chart.register(ChartAnnotation, ...registerables)
+
+
+const showChartDataInModal = (id: number) => {
+  pumpsEvent.value = []
+   
+
+    // @ts-ignore
+    pumpsEvent.value = [pumps.value.find(el => el.id == id)]
+
+
+ pumpSelect.pumpY = null
+ pumpSelect.pumpX = null
+  showChartData(id)
+  pumpsModal.value = false
+}
+
+
+
+const showChartData = (id: number) => {
+  // @ts-ignore
+  itemPump.value = pumps.value.find(el => el.id == id)
+  if (itemPump.value && itemPump.value.minx && itemPump.value.maxx && itemPump.value.maxy && itemPump.value.miny && pumpSelect) {
+
+
+    coordinates.value = []
+
+    if (itemPump.value && itemPump.value.start && itemPump.value.finish) {
+      for (let i = +itemPump.value.start; i < +itemPump.value.finish; i = i + +itemPump.value.step) {
+
+        try {
+          let y = eval(itemPump.value.formuls.replace(/x/g, i.toString()))
+          console.log(y)
+          coordinates.value.push({
+            x: +i.toFixed(2),
+            y: +y.toFixed(2),
+          })
+
+        } catch (err) {
+          console.log(err)
+          return
+
+        }
+
+
+      }
+      if (coordinates.value[coordinates.value.length - 1] != itemPump.value.finish) {
+        let y = eval(itemPump.value.formuls.replace(/x/g, itemPump.value.finish.toString()))
+        coordinates.value.push({
+          x: +itemPump.value.finish,
+          y: +y.toFixed(2),
+        })
+      }
+
+
+
+    }
+
+
+    const options2 = {
+
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'H(m)',
+        },
+        min: +itemPump.value.miny.toString(),
+        max: +itemPump.value.maxy.toString()
+      },
+      x: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Q(м³/h)',
+        },
+        min: +itemPump.value.minx.toString(),
+        max: +itemPump.value.maxx.toString()
+      },
+
+    }
+
+
+    const chartData2 = coordinates.value
+
+
+    chartData.datasets[0].data = chartData2
+    chartData.datasets[0].label = `${isWqaName(itemPump.value.name)}`
+    options.scales = options2
+
+    // @ts-ignore
+    if (pumpSelect.pumpY  && pumpSelect.pumpY) {
+      chartData.datasets[1].data = [{ 'x': pumpSelect.pumpX, 'y': pumpSelect.pumpY }]
+      // @ts-ignore
+       options.plugins.annotation.annotations = {
+      line1: {
+        type: 'line',
+        yMin: pumpSelect.pumpY,
+        yMax: pumpSelect.pumpY,
+        xMin: 0,
+        xMax: pumpSelect.pumpX,
+        borderColor: 'rgb(255, 99, 132)',
+        borderWidth: 2,
+        borderDash: [5, 5],
+      },
+      line2: {
+        type: 'line',
+        yMin: 0,
+        yMax: pumpSelect.pumpY,
+        xMin: pumpSelect.pumpX,
+        xMax: pumpSelect.pumpX,
+        borderColor: 'rgb(255, 99, 132)',
+        borderWidth: 2,
+        borderDash: [5, 5],
+      },
+      line3: {
+        type: 'label',
+        // @ts-ignore
+        xValue: pumpSelect.pumpX + 5,
+        // @ts-ignore
+        yValue: pumpSelect?.pumpY + 5,
+        borderColor: 'rgb(255, 99, 132)',
+        borderWidth: 1,
+        // borderDash: [5, 5],
+        backgroundColor: 'rgba(255,255,255)',
+        content: [`Q(м³/h) = ${pumpSelect.pumpX}, H(m) = ${pumpSelect.pumpY}`],
+        font: {
+          size: 12,
+        },
+      },
+    }
+    } else {
+      chartData.datasets[1].data = []
+        // @ts-ignore
+      options.plugins.annotation.annotations = {}
+    }
+   
+
+  }
+}
+
+
+
+
+interface IData {
+  field: string,
+  header: string,
+  warn: number
+}
+
+const columns = ref<IData[]>([
+  { field: 'type', header: 'Тип', warn: 1 },
+  { field: 'nominal_q', header: 'Расход (Q)', warn: 2 },
+  { field: 'nominal_h', header: 'Напор (H)', warn: 3 },
+  { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
+  { field: 'power', header: 'Мощность кВт', warn: 5 },
+  { field: 'speed', header: 'Скорость', warn: 6 },
+  { field: 'phase', header: 'Фаза', warn: 7 },
+  { field: 'note', header: 'Комментарий', warn: 8 },
+  
+  { field: 'frequency', header: 'Частота (Hz)', warn: 9 },
+  { field: 'voltage', header: 'Напряжение (V)', warn: 10 },
+  { field: 'launch', header: 'Запуск', warn: 11 },
+  { field: 'efficiency', header: 'КПД (%)', warn: 12 },
+  { field: 'pole', header: 'Количество полюсов', warn: 13 },
+])
+const selectedColumns = ref<IData[]>([
+  { field: 'type', header: 'Тип', warn: 1 },
+  { field: 'nominal_q', header: 'Расход (Q)', warn: 2 },
+  { field: 'nominal_h', header: 'Напор (H)', warn: 3 },
+  { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
+  { field: 'power', header: 'Мощность кВт', warn: 5 },
+  { field: 'speed', header: 'Скорость', warn: 6 },
+  { field: 'phase', header: 'Фаза', warn: 7 },
+  { field: 'note', header: 'Комментарий', warn: 8 },
+  
+])
+
+
+
+
+const onToggle = (val: IData[]) => {
+  const selectedFieldNames = selectedColumns.value.map(col => col.field)
+
+  columns.value.forEach(column => {
+    if (!selectedFieldNames.includes(column.field) && val.some(selectedCol => selectedCol.field === column.field)) {
+      selectedColumns.value.push(column)
+    }
+  })
+
+
+  selectedColumns.value = selectedColumns.value.filter(col => val.includes(col))
+  selectedColumns.value = selectedColumns.value.sort((a, b) => a.warn - b.warn)
+}
+// @ts-ignore
+const changes = (e) => {
+  // @ts-ignore
+  pumpSelect.image = types.value.find(elem => elem.type == e.value).image
+}
+
+
+
+
+const chartData = reactive({
+
+  datasets: [
+    {
+      type: "bubble",
+      data: coordinates.value,
+      cubicInterpolationMode: "monotone",
+      label: "Кривая работы насоса",
+      fill: false,
+      borderColor: 'rgb(75, 192, 192)',
+      pointBackgroundColor: 'rgb(75, 192, 192)',
+      pointRadius: 2,
+      spanGaps: true,
+      order: 2,
+    },
+    {
+      label: 'Рабочая точка',
+      data: [],
+      borderColor: 'red',
+      borderWidth: 2,
+      pointBackgroundColor: 'red', // Цвет точек
+      order: 1,
+      // pointRadius: [5, 5, 5, 10, 0, 5, 5], // Размеры точек (0 для между точек)
+    },
+  ],
+})
+
+
+const { bubbleChartProps } = useBubbleChart({
+  // @ts-ignore
+  chartData,
+  options,
+})
+
+const textForNull = (item: string | number | null | undefined) => {
+  if (!item || item == '' || item == 'null') {
+    return '---'
+  } else {
+    return item
+  }
+}
+
+const downloadPdf = () => {
+
+ 
+  if (!itemPump.value) {
+    message.title = 'Выберите насос'
+    message.text = 'Для скачивания листа подбора, выберите насос из списка'
+    errorModal.value = true
+    return
+  }
+ loadingPdf.value = true
+  let canvas = document.getElementById('bubble-chart')
+  // @ts-ignore
+  let docinfo = pdfGenerate(itemPump, pumpSelect, date, canvas.toDataURL())
+
+  pdfmake.createPdf(docinfo).download(`Волга ${isWqaName(itemPump.value.name)}.pdf`)
+    .then(() => {
+    loadingPdf.value = false
+  })
+}
+
+
+const allPump = () => {
+  if (pumpSelect.type == 'Любой') {
+    pumpsEventModal.value = pumps.value
+  } else {
+    pumpsEventModal.value = pumps.value.filter(el => el.type == pumpSelect.type)
+  }
+  pumpsModal.value = true
+}
+
+const sendMessage = () => {
+
+  let formData = new FormData()
+
+   formData.append("msg", messageTextForSend.value)
+
+  axios.post(`${API}api/vendor/send.php`, formData)
+    .then(response => {
+      console.log(response)
+      messageTextForSend.value = ''
+      useStore.showToast({ type: 'success', title: 'Спасибо!', text: `Сообщение отправлено` })
+      messageModal.value = false
+    }).catch(() => {
+      
+     useStore.showToast({ type: 'error', title: 'Ошибка!', text: `Попробуйте позднее...` })
+    })
+    .finally(() => {
+      messageTextForSend.value = ''      
+      messageModal.value = false
+    })
+}
+
+// const ttt = () => {
+//   document.querySelector(".p-multiselect-filter-container").innerHTML="Все столбцы"
+// }
+
+</script>
+
+<template>
+  <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative">
+    <div class="wrapper-logo">
+        <a href="https://volga.su" target="_blank">
+        <img class="wrapper-logo__img"  :src="Logo" alt="logo" />
+        </a>
+
+      </div>
+  
+    <h4 class="text-center text-2xl font-semibold">ПРОГРАММА ПОДБОРА НАСОСНЫХ АГРЕГАТОВ</h4>
+    <h4 class="text-center text-2xl font-semibold">"ВОЛГА" Select</h4>
+    <h5 class="text-center text-xl font-semibold mt-12">ВЫБЕРИТЕ ТИП НАСОСНОГО АГРЕГАТА</h5>
+
+
+    <div class="mt-10 sm:mt-20">
+      <div class="flex flex-col flex-col-reverse sm:flex-row justify-center items-center gap-5">
+        <div>
+          <Dropdown class=" w-72" @change="changes" v-model="pumpSelect.type" :options="types" optionLabel="type"
+            optionValue="type" placeholder="Тип насоса" />
+        </div>
+        <Image :src="pumpSelect.image" alt="насос" width="150" preview />
+      </div>
+    </div>
+
+    <h5 class="text-center text-lg font-semibold mt-12">УКАЖИТЕ ВАШУ РАБОЧУЮ ТОЧКУ:</h5>
+
+    <div>
+      <div class="flex justify-center items-center gap-5 mt-5">
+        <label>Расход (Q)
+        </label>
+        <InputGroup class=" w-48 sm:w-60">
+         <InputNumber v-model="pumpSelect.pumpX" :minFractionDigits="1" inputId="withoutgrouping" />
+   <InputGroupAddon class=" w-16">м³/ч</InputGroupAddon>
+        </InputGroup>
+       
+      </div>
+      <div class="flex justify-center items-center gap-5 mt-5">
+        <label>Напор (H)
+        </label>
+        <InputGroup class=" w-48 sm:w-60">
+        <InputNumber  v-model="pumpSelect.pumpY" :minFractionDigits="1" inputId="withoutgrouping" />
+  <InputGroupAddon class=" w-16">м.в.ст.</InputGroupAddon>
+    </InputGroup>
+      </div>
+
+    </div>
+    <div class="flex justify-center items-center gap-5 mt-5">
+      <Button class=" w-full sm:w-1/3" @click="findPump" label="ПОДОБРАТЬ" />
+    </div>
+
+    <div class="flex justify-center items-center gap-5 mt-5">
+      <Button class="w-3/4 sm:w-1/4" severity="secondary" @click="allPump" label="СПИСОК ВСЕХ НАСОСОВ" />
+    </div>
+
+  </div>
+
+  <div v-if="pumpsEvent.length > 0" class="mx-auto max-w-full px-4 py-6 sm:px-4 lg:px-4 ">
+    <DataTable showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="pumpsEvent" stripedRows tableStyle="min-width: 50rem">
+
+      <template #header>
+        <div style="text-align:left">
+          <p class="mb-2">Выбранные поля:</p>
+          <MultiSelect class="w-full " emptyFilterMessage="Не найдено" filter :modelValue="selectedColumns" :options="columns" optionLabel="header"
+            @update:modelValue="onToggle" display="chip" placeholder="Выберете столбец" />
+        </div>
+      </template>
+      <Column field="name" header="Название" style="width: 250px" :pt="{
+        root: { style: { textAlign: 'center' } },
+        headerTitle: { style: { textAlign: 'center', width: '100%' } }
+      }">
+        <template #body="slotProps">
+          <p class="cursor-pointer text-blue-700 underline hover:text-blue-900" @click="showChartData(slotProps.data.id)">
+            {{
+              isWqaName(slotProps.data.name) }}
+          </p>
+        </template>
+      </Column>
+      <Column sortable v-for="(col, index) of selectedColumns" :field="col.field"
+        :header="col.header" :key="col.field + '_' + index" :pt="{
+          root: { style: { textAlign: 'center' } },
+          headerTitle: { style: { textAlign: 'center', width: '100%' } }
+        }">
+
+      </Column>
+
+
+    </DataTable>
+    <div class="mx-auto max-w-7xl py-6 sm:px-6 mt-10">
+      <div class="flex flex-col lg:flex-row justify-center items-center gap-5">
+        <div class="w-full sm:w-1/2 ">
+          <BubbleChart style="width: 100%; height: 500px;" ref="chartRef" v-bind="bubbleChartProps" />
+        </div>
+        <div class=" w-full sm:w-1/2 ">
+          <table class="table">
+            <tbody>
+              <tr>
+                <td colspan="2">Модель</td>
+                <td data-settings="name">{{ isWqaName(itemPump?.name) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Тип насоса</td>
+                <td class="type-out">{{ textForNull(itemPump?.type) }}</td>
+              </tr>
+              <tr>
+                <td rowspan="3" class="text-vertical">Фактическая характеристика</td>
+                <td>Расход (Q)</td>
+                <td data-settings="x">{{ textForNull(pumpSelect.pumpX) }}</td>
+              </tr>
+              <tr>
+                <td>Напор (H)</td>
+                <td data-settings="y"> {{ textForNull(pumpSelect.pumpY) }}</td>
+              </tr>
+              <tr>
+                <td>Диаметр выхода</td>
+                <td class="diameter-out">{{ textForNull(itemPump?.diameter) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">КПД (%)</td>
+                <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Мощность (кВт)</td>
+                <td class="power-out">{{ textForNull(itemPump?.power) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Скорость вращения вала (rpm)</td>
+                <td class="speed-out">{{ textForNull(itemPump?.speed) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Частота переменного тока (Hz)</td>
+                <td class="frequency-out">{{ textForNull(itemPump?.frequency) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Количество фаз</td>
+                <td class="phase-out">{{ textForNull(itemPump?.phase) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Количество полюсов</td>
+                <td class="pole-out">{{ textForNull(itemPump?.pole) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Номинальное напряжение, V</td>
+                <td class="voltage-out">{{ textForNull(itemPump?.voltage) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Способ запуска</td>
+                <td class="launch-out">{{ textForNull(itemPump?.launch) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Торцевое уплотнение</td>
+                <td class="seal-out">{{ textForNull(itemPump?.seal) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Материал вала</td>
+                <td class="shaft-out">{{ textForNull(itemPump?.shaft) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Материал насоса</td>
+                <td class="pump-out">{{ textForNull(itemPump?.pump) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Рабочее давление, бар</td>
+                <td class="bar-out">{{ textForNull(itemPump?.bar) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Номинальная сила тока, А</td>
+                <td class="strength-out">{{ textForNull(itemPump?.current_strength) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Степень защиты, IP</td>
+                <td class="ip-out">{{ textForNull(itemPump?.ip) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Вес</td>
+                <td class="weight-out">{{ textForNull(itemPump?.weight) }}</td>
+              </tr>
+              <tr>
+                <td colspan="2">Примечание</td>
+                <td class="note-out">{{ textForNull(itemPump?.note) }}</td>
+              </tr>
+
+              <tr>
+                <td colspan="3">
+                  <p class="text-center">
+                    С дополнительными данными, можно ознакомиться в каталоге
+                    насосных агрегатов по ссылке -
+                    <a class="text-center text-sky-600 underline hover:text-sky-800" href="https://volga.su/catalog"
+                      target="_blank">КАТАЛОГ</a>
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <Button class=" w-full" :loading="loadingPdf" @click="downloadPdf" label="СКАЧАТЬ ЛИСТ ПОДБОРА" />
+
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <div class="mt-5 flex justify-center pb-10">
+    <div @click="messageModal = true"
+      class="mt-10 pt-4 pb-4 pr-8 pl-8 border border-red-600 text-red-500 hover:text-red-700 hover:border-red-700 cursor-pointer">
+      <p class="text-center text-danger">СООБЩИТЬ ОБ ОШИБКЕ</p>
+      <p class="text-center text-danger">ВНЕСТИ ПРЕДЛОЖЕНИЕ</p>
+    </div>
+  </div>
+
+
+  <Dialog v-model:visible="pumpsModal" dismissableMask modal :header="pumpSelect.type" :pt="{
+    root: { class: 'w-full' }
+  }">
+    <DataTable showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="pumpsEventModal" stripedRows tableStyle="min-width: 50rem">
+
+      <template #header>
+        <div style="text-align:left">
+          <p class="mb-2">Выбранные поля:</p>
+          <MultiSelect class="w-full " filter emptyFilterMessage="Не найдено" :modelValue="selectedColumns" :options="columns" optionLabel="header"
+            @update:modelValue="onToggle" display="chip" placeholder="Выберете столбец" />
+        </div>
+      </template>
+      <Column field="name" header="Название" style="width: 350px" :pt="{
+        root: { style: { textAlign: 'center' } },
+        headerTitle: { style: { textAlign: 'center', width: '100%' } }
+      }">
+        <template #body="slotProps">
+          <p class="cursor-pointer text-blue-700 underline hover:text-blue-900"
+            @click="showChartDataInModal(slotProps.data.id)"> {{
+              isWqaName(slotProps.data.name) }}
+          </p>
+        </template>
+      </Column>
+      <Column sortable v-for="(col, index) of selectedColumns" :field="col.field" :header="col.header"
+        :key="col.field + '_' + index" :pt="{
+          root: { style: { textAlign: 'center' } },
+          headerTitle: { style: { textAlign: 'center', width: '100%' } }
+        }">
+
+      </Column>
+
+
+    </DataTable>
+  </Dialog>
+
+
+  <Dialog v-model:visible="errorModal" modal :header="message.title" dismissableMask :closable="false" :pt="{
+    root: 'border-none',
+    title: {
+      style: 'text-align: center;width: 100%'
+    },
+     footer: {
+        style: 'text-align: center;width: 100%'
+      }
+  }">
+    <div class="flex flex-col justify-center items-center">
+      <InlineMessage severity="error"> {{ message.text }} </InlineMessage>
+    
+    </div>
+<template #footer>
+  <Button class="w-20" severity="secondary" label="OK" @click="errorModal = false" />
+</template>
+  </Dialog>
+
+  <Dialog v-model:visible="messageModal" modal header="ЗАМЕЧАНИЯ И ПРЕДЛОЖЕНИЯ" :style="{ width: '30rem' }" dismissableMask
+    :closable="false" :pt="{
+      root: 'border-none',
+      title: {
+        style: 'text-align: center;width: 100%'
+      },
+      footer: {
+        style: 'text-align: center;width: 100%'
+      }
+    }">
+    <p>Опишите ваше замечание или предложение:</p>
+    <Textarea class=" w-full" v-model="messageTextForSend" autoResize rows="5" />
+    <template #footer>
+      <Button label="Отправить"  @click="sendMessage" />
+      <Button  severity="secondary" label="Отмена" @click="messageModal = false" />
+    </template>
+
+  </Dialog>
+</template>
+
+<style scope>
+.table {
+  border: 1px solid #eee;
+  table-layout: fixed;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.table th {
+  font-weight: bold;
+  padding: 5px;
+  background: #efefef;
+  border: 1px solid #dddddd;
+  width: 350px;
+}
+
+.table td {
+  padding: 5px 10px;
+  border: 1px solid #eee;
+  text-align: left;
+  width: 150px;
+}
+
+.table tbody tr:nth-child(odd) {
+  background: #fff;
+}
+
+.table tbody tr:nth-child(even) {
+  background: #f7f7f7;
+}
+
+.w-full.p-dialog {
+  width: 100vw !important;
+  height: 100vh !important;
+  top: 0px;
+  left: 0px;
+  max-height: 100%;
+}
+
+.w-full .p-dialog-content {
+
+  height: 100%;
+}
+
+.wrapper-logo__img {
+	position: absolute;
+	width: 200px;
+	top: 39px;
+	left: 83px;
+}
+
+.p-datatable-resizable-table > .p-datatable-thead > tr > th, .p-datatable-resizable-table > .p-datatable-tfoot > tr > td, .p-datatable-resizable-table > .p-datatable-tbody > tr > td {
+ 
+    white-space: wrap;
+}
+
+@media (max-width: 1200px) {
+
+.text-vertical {
+		transform: rotate(-90deg);
+		align-items: center;
+		text-align: center;
+		padding: 0 !important;
+		font-size: 14px;
+	}
+	.wrapper-logo {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 20px;
+	}
+
+	.wrapper-logo__img {
+		position: static;
+		margin: 0 auto;
+		width: 200px;
+	}
+}
+</style>
