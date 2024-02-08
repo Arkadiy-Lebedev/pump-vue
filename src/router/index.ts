@@ -1,11 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/Home.vue'
-import AddPump from '../views/AddPump.vue'
-import EditPump from '../views/EditPump.vue'
-import AddType from '../views/AddType.vue'
-import Auth from '../views/Auth.vue'
-import Settings from '../views/Settings.vue'
-import PumpCalc from '../views/PumpCalc.vue'
+
 import MainLayout from '../layout/MainLayout.vue'
 import AddPumpsExel from '../views/AddPumpsExel.vue'
 import axios from 'axios'
@@ -24,7 +18,7 @@ const router = createRouter({
         {
           path: '/admin-select',
           name: 'home',
-          component: Home,
+          component: () => import('@/views/Home.vue'),
           meta: {
             needAuth: true
           }
@@ -32,7 +26,7 @@ const router = createRouter({
         {
           path: '/add-pump',
           name: 'add-pump',
-          component: AddPump,
+          component: () => import('@/views/AddPump.vue'),
           meta: {
             needAuth: true
           }
@@ -40,7 +34,7 @@ const router = createRouter({
         {
           path: '/edit-pump/:id',
           name: 'edit-pump',
-          component: EditPump,
+          component: () => import('@/views/EditPump.vue'),
           meta: {
             needAuth: true
           }
@@ -48,7 +42,7 @@ const router = createRouter({
         {
           path: '/settings/',
           name: 'settings',
-          component: Settings,
+          component: () => import('@/views/Settings.vue'),
           meta: {
             needAuth: true
           }
@@ -56,7 +50,7 @@ const router = createRouter({
         {
           path: '/add-type',
           name: 'add-type',
-          component: AddType,
+          component: () => import('@/views/AddType.vue'),
           meta: {
             needAuth: true
           }
@@ -74,12 +68,12 @@ const router = createRouter({
     {
       path: '/auth',
       name: 'auth',
-      component: Auth,
+      component: () => import('@/views/Auth.vue'),
     },
 {
       path: '/',
       name: 'pumpCalc',
-      component: PumpCalc,
+      component: () => import('@/views/PumpCalc.vue'),
     },
   ]
 })
