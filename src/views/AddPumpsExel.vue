@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { read, utils } from "xlsx"
- 
+import type { IPump } from "../types/IPump"
+import { itemPumpForExel } from "../services/itemPumpForExel"
 
 
 const loadFile = (evt) => {
@@ -21,21 +22,22 @@ const loadFile = (evt) => {
        console.log(XL_row_object)
 
 
+       // проверка на ошибка
 
+       // сюда написать проверку
+
+
+       // отправка в базу
       XL_row_object.forEach((el, i) => {
+
+      // itemPumpForExel(el)
+
+   console.log(itemPumpForExel(el))
+
         // console.log(Object.values(el)[0])
         // if( Object.values(el)[0].indexOf("1.1") >=0){
         //   alert(456)
         // }
-
-
-        Object.values(el).forEach(elem => {
-       
-
-
-        })
-
-
 
 
       })
