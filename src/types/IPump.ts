@@ -89,5 +89,6 @@ export interface IPump {
     wheel_standart: string,
     wheel_order: string,
     date_update?: string | null,
-    pole: number | null,
+    pole: string,
+    execution: string,
 }

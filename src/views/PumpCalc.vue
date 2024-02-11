@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
+import { FilterMatchMode } from 'primevue/api'
 import axios from 'axios'
 import type { IPump } from "../types/IPump"
 import type { IPumpSelect } from "../types/IPumpSelect"
@@ -10,9 +11,22 @@ import { API } from "../api/api"
 import { usePDF } from 'vue3-pdfmake'
 import Logo from '../assets/image/logo2.png'
 import { useToastStore } from '../stores/toastStore'
+import { useWidthChart } from '../services/useWidthChart'
+
+const widthChart = useWidthChart()
+console.log(widthChart)
 const useStore = useToastStore()
 
 import { pdfGenerate } from "../services/pdfGenerate"
+
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  'country.name': { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  representative: { value: null, matchMode: FilterMatchMode.IN },
+  status: { value: null, matchMode: FilterMatchMode.EQUALS },
+  verified: { value: null, matchMode: FilterMatchMode.EQUALS }
+})
 
 // @ts-ignore
 const pdfmake = usePDF({
@@ -22,6 +36,12 @@ const pdfmake = usePDF({
 interface ITypeCalc {
   image: string,
   type: string
+}
+
+const getImage = () => {
+  const img = new Image()
+  img.src = Logo
+  return img
 }
 
 
@@ -48,6 +68,7 @@ const pumpsModal = ref<boolean>(false)
 const messageModal = ref<boolean>(false)
 const messageTextForSend = ref<string>('')
 const loadingPdf = ref<boolean>(false)
+const orderList = ref<string | null>(null)
 
 
 const date = new Date().toLocaleDateString('ru-RU')
@@ -63,14 +84,14 @@ function formulaCreate(formula: string, x: string, name: string) {
   }
 }
 
-function isWqaName(name: string | undefined) {
-  if (name && name.indexOf("WQA")) {
-    let newName = name.replace('-', '').replace('-', '')
-    return newName
-  } else {
-    return name
-  }
-}
+// function isWqaName(name: string | undefined) {
+//   if (name && name.indexOf("WQA")) {
+//     let newName = name.replace('-', '').replace('-', '')
+//     return newName
+//   } else {
+//     return name
+//   }
+// }
 
 const newarray = ref<IPump[] | []>([])
 
@@ -219,7 +240,19 @@ const options = reactive({
       }
     },
     annotation: {
+      annotations: {       
+        line4: {
+          type: 'label',
+          width: widthChart?.width,
+          height: widthChart?.height,
+          content: getImage(),
+          font: {
+            size: 60,
+          },
 
+          opacity: 0.1
+        },
+      }
     }
   },
 
@@ -249,7 +282,7 @@ const showChartData = (id: number) => {
   itemPump.value = pumps.value.find(el => el.id == id)
   if (itemPump.value && itemPump.value.minx && itemPump.value.maxx && itemPump.value.maxy && itemPump.value.miny && pumpSelect) {
 
-
+    orderList.value = `ЗАПРОСИТЬ СЧЕТ НА ${ itemPump.value.name}`
     coordinates.value = []
 
     if (itemPump.value && itemPump.value.start && itemPump.value.finish) {
@@ -312,7 +345,7 @@ const showChartData = (id: number) => {
 
 
     chartData.datasets[0].data = chartData2
-    chartData.datasets[0].label = `${isWqaName(itemPump.value.name)}`
+    chartData.datasets[0].label = `${itemPump.value.name}`
     options.scales = options2
 
     // @ts-ignore
@@ -355,11 +388,40 @@ const showChartData = (id: number) => {
           size: 12,
         },
       },
+      line4: {
+        type: 'label',
+   
+   
+      
+       width: widthChart?.width,
+          height: widthChart?.height,
+        content: getImage(),
+        font: {
+          size: 60,
+        },
+       
+        opacity: 0.1
+      },
     }
     } else {
       chartData.datasets[1].data = []
         // @ts-ignore
-      options.plugins.annotation.annotations = {}
+      options.plugins.annotation.annotations = {
+        line4: {
+          type: 'label',
+
+
+
+          width: widthChart?.width,
+          height: widthChart?.height,
+          content: getImage(),
+          font: {
+            size: 60,
+          },
+
+          opacity: 0.1
+        },
+      }
     }
    
 
@@ -377,8 +439,8 @@ interface IData {
 
 const columns = ref<IData[]>([
   { field: 'type', header: 'Тип', warn: 1 },
-  { field: 'nominal_q', header: 'Расход (Q)', warn: 2 },
-  { field: 'nominal_h', header: 'Напор (H)', warn: 3 },
+  { field: 'nominal_q', header: 'Расход Q (м³/ч)', warn: 2 },
+  { field: 'nominal_h', header: 'Напор H (м.в.ст.)', warn: 3 },
   { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
   { field: 'power', header: 'Мощность кВт', warn: 5 },
   { field: 'speed', header: 'Скорость', warn: 6 },
@@ -393,8 +455,8 @@ const columns = ref<IData[]>([
 ])
 const selectedColumns = ref<IData[]>([
   { field: 'type', header: 'Тип', warn: 1 },
-  { field: 'nominal_q', header: 'Расход (Q)', warn: 2 },
-  { field: 'nominal_h', header: 'Напор (H)', warn: 3 },
+  { field: 'nominal_q', header: 'Расход Q (м³/ч)', warn: 2 },
+  { field: 'nominal_h', header: 'Напор H (м.в.ст.)', warn: 3 },
   { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
   { field: 'power', header: 'Мощность кВт', warn: 5 },
   { field: 'speed', header: 'Скорость', warn: 6 },
@@ -484,7 +546,7 @@ const downloadPdf = () => {
   // @ts-ignore
   let docinfo = pdfGenerate(itemPump, pumpSelect, date, canvas.toDataURL())
 
-  pdfmake.createPdf(docinfo).download(`Волга ${isWqaName(itemPump.value.name)}.pdf`)
+  pdfmake.createPdf(docinfo).download(`Волга ${itemPump.value.name}.pdf`)
     .then(() => {
     loadingPdf.value = false
   })
@@ -538,7 +600,7 @@ const sendMessage = () => {
       </div>
   
     <h4 class="text-center text-2xl font-semibold">ПРОГРАММА ПОДБОРА НАСОСНЫХ АГРЕГАТОВ</h4>
-    <h4 class="text-center text-2xl font-semibold">"ВОЛГА" Select</h4>
+    <h4 class="text-center text-2xl font-semibold">"ВОЛГА" SELECT</h4>
     <h5 class="text-center text-xl font-semibold mt-12">ВЫБЕРИТЕ ТИП НАСОСНОГО АГРЕГАТА</h5>
 
 
@@ -585,9 +647,17 @@ const sendMessage = () => {
   </div>
 
   <div v-if="pumpsEvent.length > 0" class="mx-auto max-w-full px-4 py-6 sm:px-4 lg:px-4 ">
-    <DataTable showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="pumpsEvent" stripedRows tableStyle="min-width: 50rem">
+    <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            currentPageReportTemplate="{first} до {last}, из {totalRecords}"
+    v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="pumpsEvent" stripedRows tableStyle="min-width: 50rem">
 
       <template #header>
+         <div class="flex justify-content-end mb-3">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search" />
+                        <InputText v-model="filters['global'].value" placeholder="Поиск" />
+                    </span>
+                </div>
         <div style="text-align:left">
           <p class="mb-2">Выбранные поля:</p>
           <MultiSelect class="w-full " emptyFilterMessage="Не найдено" filter :modelValue="selectedColumns" :options="columns" optionLabel="header"
@@ -601,7 +671,7 @@ const sendMessage = () => {
         <template #body="slotProps">
           <p class="cursor-pointer text-blue-700 underline hover:text-blue-900" @click="showChartData(slotProps.data.id)">
             {{
-              isWqaName(slotProps.data.name) }}
+              slotProps.data.name }}
           </p>
         </template>
       </Column>
@@ -625,7 +695,7 @@ const sendMessage = () => {
             <tbody>
               <tr>
                 <td colspan="2">Модель</td>
-                <td data-settings="name">{{ isWqaName(itemPump?.name) }}</td>
+                <td data-settings="name">{{ itemPump?.name }}</td>
               </tr>
               <tr>
                 <td colspan="2">Тип насоса</td>
@@ -633,11 +703,11 @@ const sendMessage = () => {
               </tr>
               <tr>
                 <td rowspan="3" class="text-vertical">Фактическая характеристика</td>
-                <td>Расход (Q)</td>
+                <td>Расход Q (м³/ч)</td>
                 <td data-settings="x">{{ textForNull(pumpSelect.pumpX) }}</td>
               </tr>
               <tr>
-                <td>Напор (H)</td>
+                <td>Напор H (м.в.ст.)</td>
                 <td data-settings="y"> {{ textForNull(pumpSelect.pumpY) }}</td>
               </tr>
               <tr>
@@ -685,7 +755,7 @@ const sendMessage = () => {
                 <td class="shaft-out">{{ textForNull(itemPump?.shaft) }}</td>
               </tr>
               <tr>
-                <td colspan="2">Материал насоса</td>
+                <td colspan="2">Материал насоса и колеса</td>
                 <td class="pump-out">{{ textForNull(itemPump?.pump) }}</td>
               </tr>
               <tr>
@@ -719,11 +789,20 @@ const sendMessage = () => {
                   </p>
                 </td>
               </tr>
+               <tr>
+                  <td colspan="3">
+                    <p class="text-center">
+                      Ознакомится с ценами на насосные агрегаты -
+                      <a class="text-center text-sky-600 underline hover:text-sky-800" href="https://volga.su/price"
+                        target="_blank">Прайс</a>
+                    </p>
+                  </td>
+                </tr>
             </tbody>
           </table>
 
           <Button class=" w-full" :loading="loadingPdf" @click="downloadPdf" label="СКАЧАТЬ ЛИСТ ПОДБОРА" />
-
+          <Button v-if="orderList" class="mt-5 w-full"  @click="downloadPdf" :label="orderList"  />
         </div>
       </div>
     </div>
@@ -743,9 +822,17 @@ const sendMessage = () => {
   <Dialog v-model:visible="pumpsModal" dismissableMask modal :header="pumpSelect.type" :pt="{
     root: { class: 'w-full' }
   }">
-    <DataTable showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="pumpsEventModal" stripedRows tableStyle="min-width: 50rem">
+    <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            currentPageReportTemplate="{first} до {last}, из {totalRecords}"
+     v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="pumpsEventModal" stripedRows tableStyle="min-width: 50rem">
 
       <template #header>
+         <div class="flex justify-content-end mb-3">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search" />
+                        <InputText v-model="filters['global'].value" placeholder="Поиск" />
+                    </span>
+                </div>
         <div style="text-align:left">
           <p class="mb-2">Выбранные поля:</p>
           <MultiSelect class="w-full " filter emptyFilterMessage="Не найдено" :modelValue="selectedColumns" :options="columns" optionLabel="header"
@@ -759,7 +846,7 @@ const sendMessage = () => {
         <template #body="slotProps">
           <p class="cursor-pointer text-blue-700 underline hover:text-blue-900"
             @click="showChartDataInModal(slotProps.data.id)"> {{
-              isWqaName(slotProps.data.name) }}
+              slotProps.data.name }}
           </p>
         </template>
       </Column>

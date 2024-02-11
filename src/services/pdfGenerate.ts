@@ -1,6 +1,4 @@
 import { APIPDF } from "../api/api"
-import type { IPump } from "../types/IPump"
-import type { IPumpSelect } from "../types/IPumpSelect"
 
 function isWqaName(name: string | undefined) {
     if (name && name.indexOf("WQA")) {
@@ -314,11 +312,11 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
         //  		}
         //  	]
         //  },
-
+        watermark: { text: 'ВОЛГА', color: 'blue', opacity: 0.1, bold: true, angle: 0, fontSize: 120 },
         //страница 1
         content: [{
             table: {
-                widths: [110, '*', 100, 10, 70],
+                widths: [110, '*', 90, 50, 30],
                 body: [
                     [{
                         rowSpan: 4,
@@ -399,7 +397,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: isWqaName(itemPump.value.name),
+                        text: itemPump.value.name,
                         alignment: 'center',
                         margin: [0, -5, 0, -2],
                     },
@@ -411,7 +409,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         colSpan: 1,
-                        text: 'Q:',
+                        text: 'Q (м³/ч):',
                         alignment: 'right',
                         margin: [0, -5, 0, -1],
                     },
@@ -426,7 +424,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         '',
                         '',
                         {
-                            text: 'H:',
+                            text: 'H (м.в.ст.):',
                             alignment: 'right',
                             margin: [0, 0, 0, -2],
                         },
@@ -507,7 +505,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     ],
                     [{
                         colSpan: 2,
-                        text: 'Выбранный расход, Q:',
+                        text: 'Выбранный расход, Q (м³/ч):',
                         alignment: 'right',
                     },
                         '',
@@ -524,7 +522,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     ],
                     [{
                         colSpan: 2,
-                        text: 'Выбранный напор, H:',
+                        text: 'Выбранный напор, H (м.в.ст.):',
                         alignment: 'right',
                     },
                         '',
@@ -720,7 +718,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     [
                         '',
                         {
-                            text: 'Верхний подшипник:',
+                            text: 'На двигателе:',
                             alignment: 'right',
                         },
 
@@ -739,7 +737,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     [
                         '',
                         {
-                            text: 'Нижний подшипник:',
+                            text: 'На насосе:',
                             alignment: 'right',
                         },
 
@@ -870,6 +868,23 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     {
                         text: ' ',
                     },
+                    ],
+                    [{
+                        colSpan: 2,
+                        text: 'Тип исполнения:',
+                        alignment: 'right',
+                    },
+                        '',
+                        {
+                            text: textForNull(itemPump.value.execution),
+                            alignment: 'center',
+                        },
+                        {
+                            text: '',
+                        },
+                        {
+                            text: ' ',
+                        },
                     ],
                     [{
                         colSpan: 5,
@@ -1079,7 +1094,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
         // страница 2
         {
             table: {
-                widths: [110, '*', 100, 10, 70],
+                widths: [110, '*', 90, 50, 30], 
                 body: [
                     [{
                         rowSpan: 4,
@@ -1160,7 +1175,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: isWqaName(itemPump.value.name),
+                        text: itemPump.value.name,
                         alignment: 'center',
                         margin: [0, -5, 0, -2],
                     },
@@ -1172,7 +1187,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         colSpan: 1,
-                        text: 'Q:',
+                        text: 'Q (м³/ч):',
                         alignment: 'right',
                         margin: [0, -5, 0, -1],
                     },
@@ -1187,7 +1202,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         '',
                         '',
                         {
-                            text: 'H:',
+                            text: 'H (м.в.ст.):',
                             alignment: 'right',
                             margin: [0, 0, 0, -2],
                         },
@@ -1269,14 +1284,14 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         margin: [0, 5, 0, 5],
                     },
                     ],
-                    [{                        
+                    [{
                         text: 'Мощность до 11 кВт',
                         alignment: 'center',
                     },
-                        {
-                            text: 'Мощность свыше 11 кВт',
-                            alignment: 'center',
-                        }
+                    {
+                        text: 'Мощность свыше 11 кВт',
+                        alignment: 'center',
+                    }
                     ],
                 ],
             },
@@ -1296,13 +1311,13 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                 },
             },
         },
-      
+
 
         // 3 страница
 
         {
             table: {
-                widths: [110, '*', 100, 10, 70],
+                widths: [110, '*', 90, 50, 30], 
                 body: [
                     [{
                         rowSpan: 4,
@@ -1383,7 +1398,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: isWqaName(itemPump.value.name),
+                        text: itemPump.value.name,
                         alignment: 'center',
                         margin: [0, -5, 0, -2],
                     },
@@ -1395,7 +1410,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         colSpan: 1,
-                        text: 'Q:',
+                        text: 'Q (м³/ч):',
                         alignment: 'right',
                         margin: [0, -5, 0, -1],
                     },
@@ -1410,7 +1425,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         '',
                         '',
                         {
-                            text: 'H:',
+                            text: 'H (м.в.ст.):',
                             alignment: 'right',
                             margin: [0, 0, 0, -2],
                         },
@@ -1816,7 +1831,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
         //страница 4
         {
             table: {
-                widths: [110, '*', 100, 10, 70],
+                widths: [110, '*', 90, 50, 30],
                 body: [
                     [{
                         rowSpan: 4,
@@ -1897,7 +1912,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: isWqaName(itemPump.value.name),
+                        text: itemPump.value.name,
                         alignment: 'center',
                         margin: [0, -5, 0, -2],
                     },
@@ -1909,7 +1924,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         colSpan: 1,
-                        text: 'Q:',
+                        text: 'Q (м³/ч):',
                         alignment: 'right',
                         margin: [0, -5, 0, -1],
                     },
@@ -1924,7 +1939,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         '',
                         '',
                         {
-                            text: 'H:',
+                            text: 'H (м.в.ст.):',
                             alignment: 'right',
                             margin: [0, 0, 0, -2],
                         },

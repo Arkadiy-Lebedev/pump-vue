@@ -24,6 +24,14 @@ const loadPumpOne = async (id: string[] | string) => {
   fetch(`${API}api/pump/read_one.php?id=${id}`)
     .then((response) => response.json())
     .then((data) => {
+     
+    for (var key in data) {
+      if (data[key] == " " || data[key] == "") {
+          data[key] = null
+        }
+
+      }
+
       pump.id = data.id
       pump.coordinates = JSON.parse(data.coordinates)
       pump.name = data.name
@@ -111,7 +119,8 @@ const loadPumpOne = async (id: string[] | string) => {
       pump.flange = JSON.parse(data.flange)
       pump.wheel_standart = data.wheel_standart
       pump.wheel_order = data.wheel_order
-      pump.pole = JSON.parse(data.pole)
+      pump.pole = data.pole
+      pump.execution = data.execution
 
       loadTypes()
       console.log(pump)
@@ -206,7 +215,8 @@ const pump = reactive<IPump>({
   flange: null,
   wheel_standart: '',
   wheel_order: '',
-  pole: null
+  pole: '',
+   execution: '',
 })
 
 watch(() => pump.formuls, (formula) => {
@@ -460,14 +470,14 @@ const { bubbleChartProps } = useBubbleChart({
             <!-- <small id="username-help">Enter your username to reset your password.</small> -->
           </div>
           <div class="input-group">
-            <label class="input-group__label">Номинальная рабочая точка Q
+            <label class="input-group__label">Номинальная рабочая точка Q (м³/ч)
             </label>
             <InputNumber v-model="pump.nominal_q" :minFractionDigits="1" inputId="withoutgrouping" />
 
             <!-- <small id="username-help">Enter your username to reset your password.</small> -->
           </div>
           <div class="input-group">
-            <label class="input-group__label">Номинальная рабочая точка H
+            <label class="input-group__label">Номинальная рабочая точка H (м.в.ст.)
             </label>
             <InputNumber v-model="pump.nominal_h" :minFractionDigits="1" inputId="withoutgrouping" />
 
@@ -512,12 +522,9 @@ const { bubbleChartProps } = useBubbleChart({
           </div>
 
 
+ 
           <div class="input-group">
-            <label class="input-group__label">Материал вала</label>
-            <InputText v-model="pump.shaft" aria-describedby="username-help" />
-          </div>
-          <div class="input-group">
-            <label class="input-group__label">Материал насоса</label>
+            <label class="input-group__label">Материал насоса и колеса</label>
             <InputText v-model="pump.pump" aria-describedby="username-help" />
           </div>
           <div class="input-group">
@@ -549,10 +556,14 @@ const { bubbleChartProps } = useBubbleChart({
                   inputId="withoutgrouping" />
                 
               </div>
+   <div class="input-group">
+                  <label class="input-group__label">Количество полюсов</label>
+                  <InputText v-model="pump.pole" aria-describedby="username-help" />
+                </div>
               <div class="input-group">
-                <label class="input-group__label">Количество полюсов</label>
-                <InputNumber v-model="pump.pole" aria-describedby="username-help" />
-              </div>
+                  <label class="input-group__label">Тип исполнения</label>
+                  <InputText v-model="pump.execution" aria-describedby="username-help" />
+                </div>
           <div class="input-group">
             <label class="input-group__label">Примечание</label>
 
@@ -593,11 +604,11 @@ const { bubbleChartProps } = useBubbleChart({
             <InputText v-model="pump.bearing_standart" aria-describedby="username-help" />
           </div>
           <div class="input-group">
-            <label class="input-group__label">Верхний подшипник:</label>
+            <label class="input-group__label">На двигателе:</label>
             <InputText v-model="pump.bearing_up_standart" aria-describedby="username-help" />
           </div>
           <div class="input-group">
-            <label class="input-group__label">Нижний подшипник:</label>
+            <label class="input-group__label">На насосе:</label>
             <InputText v-model="pump.bearing_down_standart" aria-describedby="username-help" />
           </div>
           <div class="input-group">
@@ -644,11 +655,11 @@ const { bubbleChartProps } = useBubbleChart({
             <InputText v-model="pump.bearing_order" aria-describedby="username-help" />
           </div>
           <div class="input-group">
-            <label class="input-group__label">Верхний подшипник:</label>
+            <label class="input-group__label">На двигателе:</label>
             <InputText v-model="pump.bearing_up_order" aria-describedby="username-help" />
           </div>
           <div class="input-group">
-            <label class="input-group__label">Нижний подшипник:</label>
+            <label class="input-group__label">На насосе:</label>
             <InputText v-model="pump.bearing_down_order" aria-describedby="username-help" />
           </div>
           <div class="input-group">
@@ -854,21 +865,21 @@ const { bubbleChartProps } = useBubbleChart({
         </div>
         <div class="sm:flex gap-5  mt-5">
           <div class="input-group">
-            <label class="input-group__label">Шкала Q (X), минимум</label>
+            <label class="input-group__label">Шкала Q (м³/ч) (X), минимум</label>
             <InputNumber v-model="pump.minx" inputId="withoutgrouping" />
           </div>
           <div class="input-group">
-            <label class="input-group__label">Шкала Q (X), максимум</label>
+            <label class="input-group__label">Шкала Q (м³/ч) (X), максимум</label>
             <InputNumber v-model="pump.maxx" inputId="withoutgrouping" />
           </div>
         </div>
         <div class="sm:flex gap-5  mt-5 mb-2">
           <div class="input-group">
-            <label class="input-group__label">Шкала H (Y), минимум</label>
+            <label class="input-group__label">Шкала H (м.в.ст.) (Y), минимум</label>
             <InputNumber v-model="pump.miny" inputId="withoutgrouping" />
           </div>
           <div class="input-group">
-            <label class="input-group__label">Шкала H (Y), максимум</label>
+            <label class="input-group__label">Шкала H (м.в.ст.) (Y), максимум</label>
             <InputNumber v-model="pump.maxy" inputId="withoutgrouping" />
           </div>
         </div>

@@ -1,8 +1,67 @@
 import type { IPump } from "../types/IPump"
+import type { IType } from "../types/IType"
 
 
+let fullName: string
+let typeForData: number | string
 
-export const itemPumpForExel = (el: any ) => {
+
+let isErrors: boolean = false
+let errorsMessage: string[] = []
+let formula: string 
+
+export const itemPumpForExel = (el: any, types: IType[], i: number) => {
+  errorsMessage = []
+  isErrors = false
+
+  if (el.name && el.name.indexOf("WQA")) {
+    let diameter = el.diameter ? `${el.diameter}` : '' 
+    let series = el.series ? `${el.series}` : '' 
+    let nominal_q = el.nominal_q ? `${el.nominal_q}` : '' 
+    let nominal_h = el.nominal_h ? `-${el.nominal_h}` : '' 
+    let power = el.power ? `-${el.power}` : '' 
+    let pole = el.pole ? `-${el.pole}` : '' 
+    let execution = el.execution ? `-${el.execution}` : '' 
+    fullName = diameter + series + nominal_q + nominal_h + power + pole + execution
+    
+  }
+  else {
+    fullName = el.name ?? 'Насос'
+  }
+
+  let typeEltement = types.value.find(item => item.type == el.type)
+
+
+  if (typeEltement) {
+    typeForData = typeEltement.id
+    
+  } else {
+    typeForData = ''
+    isErrors = true
+    errorsMessage.push('Неверный Тип насоса')
+
+  }
+
+  if (el.formuls) {
+    try {
+      let x = 1
+      let y = eval(el.formuls.replace(/x/g, x))
+      
+    }
+    catch (err) {
+isErrors = true
+      errorsMessage.push('Неверная формула')
+      
+    }
+  }
+
+
+  if (isErrors) {
+    return { status: true, message: errorsMessage,  pump: el, index: i }
+  }
+
+  
+  
     let pumpElement: IPump = {
         id: 0,
         coordinates: [],
@@ -20,7 +79,7 @@ export const itemPumpForExel = (el: any ) => {
         seal: "",
         shaft: "",
         pump: "",
-        type: "",
+      type: '',
         error: 1,
         minx: 0,
         maxx: 50,
@@ -90,12 +149,13 @@ export const itemPumpForExel = (el: any ) => {
         flange: null,
         wheel_standart: '',
         wheel_order: '',
-        pole: null
+      pole: '',
+      execution: '',
       }
       
       
       
-      pumpElement.name=  el.name ?? "насос"
+      pumpElement.name = fullName
       pumpElement.series=  el.series ?? ""
       pumpElement.diameter=  el.diameter ?? null
       pumpElement.efficiency=  el.efficiency ?? null
@@ -109,15 +169,15 @@ export const itemPumpForExel = (el: any ) => {
       pumpElement.seal=  el.seal ?? ""
       pumpElement.shaft=  el.shaft ?? ""
       pumpElement.pump=  el.pump ?? ""
-      pumpElement.type=  el.type ?? ""
+  pumpElement.type = typeForData
       pumpElement.error= el.error ?? 1
       pumpElement.minx= el.minx ?? 0
       pumpElement.maxx= el.maxx ?? 50
       pumpElement.miny= el.miny ?? 0
       pumpElement.maxy= el.maxy ?? 50
-      pumpElement.formuls=  el.formuls ?? ""
-      pumpElement.start=  el.start ?? null
-      pumpElement.finish=  el.finish ?? null
+      pumpElement.formuls=  el.formuls ?? "x*1"
+      pumpElement.start=  el.start ?? 0
+      pumpElement.finish=  el.finish ?? 0
       pumpElement.step= el.step ?? 0.2
       pumpElement.nominal_q=  el.nominal_q ?? null
       pumpElement.nominal_h=  el.nominal_h ?? null
@@ -180,6 +240,6 @@ export const itemPumpForExel = (el: any ) => {
       pumpElement.wheel_standart=  el. wheel_standart ?? ""
       pumpElement.wheel_order=  el. wheel_order ?? ""
       pumpElement.pole=  el.pole ?? null
-    
+    pumpElement.execution = el.execution ?? ''
       return pumpElement
 }

@@ -7,6 +7,7 @@ import { API } from "../api/api"
 import axios from 'axios'
 import { useConfirm } from "primevue/useconfirm"
 import { useToastStore } from '../stores/toastStore'
+import { FilterMatchMode } from 'primevue/api'
 const useStore = useToastStore()
 
 import { useRouter } from 'vue-router'
@@ -16,6 +17,16 @@ const router = useRouter()
 
 const pumps = ref<IPump[]>([])
 const loading = ref(false)
+
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  'country.name': { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+  representative: { value: null, matchMode: FilterMatchMode.IN },
+  status: { value: null, matchMode: FilterMatchMode.EQUALS },
+  verified: { value: null, matchMode: FilterMatchMode.EQUALS }
+})
+
 
 
 const loadAllPump = async () => {
@@ -117,8 +128,8 @@ interface IData {
 
 const columns = ref<IData[]>([
   { field: 'type', header: 'Тип', warn: 1 },
-  { field: 'nominal_q', header: 'Расход (Q)' , warn: 2 },
-  { field: 'nominal_h', header: 'Напор (H)' , warn: 3 },
+  { field: 'nominal_q', header: 'Расход Q (м³/ч)' , warn: 2 },
+  { field: 'nominal_h', header: 'Напор H (м.в.ст.)' , warn: 3 },
   { field: 'diameter', header: 'Диаметр выхода' , warn: 4 },
   { field: 'power', header: 'Мощность кВт' , warn: 5 },
   { field: 'speed', header: 'Скорость' , warn: 6 },
@@ -133,8 +144,8 @@ const columns = ref<IData[]>([
 ])
 const selectedColumns = ref<IData[]>([
   { field: 'type', header: 'Тип', warn: 1 },
-  { field: 'nominal_q', header: 'Расход (Q)', warn: 2 },
-  { field: 'nominal_h', header: 'Напор (H)', warn: 3 },
+  { field: 'nominal_q', header: 'Расход Q (м³/ч)', warn: 2 },
+  { field: 'nominal_h', header: 'Напор H (м.в.ст.)', warn: 3 },
   { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
   { field: 'power', header: 'Мощность кВт', warn: 5 },
   { field: 'speed', header: 'Скорость', warn: 6 },
@@ -170,9 +181,17 @@ const onToggle = (val: IData[]) => {
 
 
   <div class="mx-auto max-w-full px-4 py-6 sm:px-4 lg:px-4">
-    <DataTable showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="pampForTable" stripedRows tableStyle="min-width: 50rem"   >
+    <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+          currentPageReportTemplate="{first} до {last}, из {totalRecords}"
+    v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="pampForTable" stripedRows tableStyle="min-width: 50rem"   >
 
       <template #header>
+         <div class="flex justify-content-end mb-3">
+                  <span class="p-input-icon-left">
+                      <i class="pi pi-search" />
+                      <InputText v-model="filters['global'].value" placeholder="Поиск" />
+                  </span>
+              </div>
                     <div style="text-align:left" >
                         <MultiSelect  class="w-full " filter emptyFilterMessage="Не найдено" :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
                             display="chip" placeholder="Выберете столбец" />
@@ -182,14 +201,14 @@ const onToggle = (val: IData[]) => {
                   root: { style: { textAlign: 'center' } },
                   headerTitle: { style: { textAlign: 'center', width: '100%' } }
                 }">
-          <template #body="slotProps">
-            <p class="cursor-pointer text-blue-700 underline hover:text-blue-900" @click="showPanel(slotProps.data.id)"> {{
-              slotProps.data.name }}
+          <template #body="{data}">
+            <p class="cursor-pointer text-blue-700 underline hover:text-blue-900" @click="showPanel(data.id)"> {{
+              data.name }}
             </p>
             <div class="flex justify-between gap-4 mt-2">
-              <i class="pi pi-pencil del-trash hover:text-red-400 cursor-pointer text-xs" @click="router.push({ name: 'edit-pump', params: { id: slotProps.data.id ? slotProps.data.id : 0 } })"></i>
-              <i class="pi pi-copy del-trash hover:text-red-400 cursor-pointer text-xs" @click="copyPump(slotProps.data.id ? slotProps.data.id : 0)"></i>
-              <i class="pi pi-trash del-trash hover:text-red-400 cursor-pointer text-xs" @click="confirm1($event, slotProps.data.id ? slotProps.data.id : 0)"></i>
+              <i class="pi pi-pencil del-trash hover:text-red-400 cursor-pointer text-xs" @click="router.push({ name: 'edit-pump', params: { id: data.id ? data.id : 0 } })"></i>
+              <i class="pi pi-copy del-trash hover:text-red-400 cursor-pointer text-xs" @click="copyPump(data.id ? data.id : 0)"></i>
+              <i class="pi pi-trash del-trash hover:text-red-400 cursor-pointer text-xs" @click="confirm1($event, data.id ? data.id : 0)"></i>
             
               <ConfirmPopup></ConfirmPopup>
             </div>

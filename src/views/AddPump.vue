@@ -18,6 +18,7 @@ const useStore = useToastStore()
 const router = useRouter()
 
 const copyPump = ref<boolean>(false)
+const isAutoName = ref<boolean>(true)
 const isFormulaSucces = ref<boolean>(false)
 
 const loadTypes = async () => {
@@ -169,22 +170,24 @@ const pump: IPump = reactive<IPump>({
   flange: null,
   wheel_standart: '',
   wheel_order: '',
-  pole: null
+  pole: '',
+  execution: ''
 })
 
-const IsWQAName = ref(false)
+// const IsWQAName = ref(false)
 
-watch(() => pump.name, (name) => {
-  if (name.indexOf("WQA") !== -1) {
-    IsWQAName.value = true
-  } else {
-    IsWQAName.value = false
-  }
+// watch(() => pump.name, (name) => {
+//   if (name.indexOf("WQA") !== -1) {
+//     IsWQAName.value = true
+//   } else {
+//     IsWQAName.value = false
+//   }
   
-})
+// })
 
 watch(() => pump.diameter, (diameter) => {
   pump.flange = diameter
+  autoName()
   
 })
 
@@ -220,17 +223,66 @@ watch(() => pump.material_order, (material) => {
   pump.wheel_order = material  
 })
 
+watch(() => pump.series, (series) => {
+ autoName()
+})
 
-const parsingName = () => {
-  const newArray = pump.name.split("-")
+watch(() => pump.nominal_q, (nominal_q) => {
+  autoName()
+})
+
+watch(() => pump.nominal_h, (nominal_h) => {
+  autoName()
+})
+
+watch(() => pump.power, (power) => {
+  autoName()
+})
+
+watch(() => pump.pole, (pole) => {
+ autoName()
+})
+
+watch(() => pump.execution, (execution) => {
+  autoName()
+})
+
+// const parsingName = () => {
+//   const newArray = pump.name.split("-")
   
-  if (newArray.length > 0) {
-    pump.series = newArray[1]
-    pump.diameter = +newArray[0]
-    pump.nominal_q = +newArray[2]
-    pump.nominal_h = +newArray[3]
-    pump.power = +newArray[4]
+//   if (newArray.length > 0) {
+//     pump.series = newArray[1]
+//     pump.diameter = +newArray[0]
+//     pump.nominal_q = +newArray[2]
+//     pump.nominal_h = +newArray[3]
+//     pump.power = +newArray[4]
+//   }
+// }
+
+
+const autoName = () => {
+  console.log(isAutoName.value)
+  if (isAutoName.value) {
+    if (pump.series == "WQA" || pump.series == "wqa") {
+    let diameter = pump.diameter ? `${pump.diameter}` : ''
+    let series = pump.series ? `${pump.series}` : ''
+    let nominal_q = pump.nominal_q ? `${pump.nominal_q}` : ''
+    let nominal_h = pump.nominal_h ? `-${pump.nominal_h}` : ''
+    let power = pump.power ? `-${pump.power}` : ''
+    let pole = pump.pole ? `-${pump.pole}` : ''
+    let execution = pump.execution ? `-${pump.execution}` : ''
+    
+    pump.name =  diameter + series + nominal_q + nominal_h + power + pole + execution
+    
+  } else {
+     pump.name = "Насос"
+    
   }
+  }
+  
+  
+ 
+ 
 }
 
 const diametrIcon = () => {
@@ -388,6 +440,7 @@ const { bubbleChartProps } = useBubbleChart({
   <SubHeader title="Новый насос" />
   <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
     <Button @click="router.push({ name: 'add-type' })" icon="pi pi-book" label="Типы насосов" severity="secondary" />
+    <Button class=" ms-5" @click="router.push({ name: 'add-type-data' })" icon="pi pi-database" label="Из файла" severity="secondary" />
     <div class="wrapper mt-5">
       <Card>
           <template #content>
@@ -396,11 +449,18 @@ const { bubbleChartProps } = useBubbleChart({
             <div class="input-group">
               <label class="input-group__label" for="username">Модель насоса *</label>
               <InputGroup>
-                <InputText id="username" v-model="pump.name" aria-describedby="username-help"
+                <InputText id="username" v-model="pump.name" aria-describedby="username-help" :disabled="isAutoName"
                   :class="{ 'p-invalid': errorMessage }" />
-                <Button @click="parsingName" label="WQA" severity="warning" v-if="IsWQAName" size="small" />
+                 
+                  
+                <!-- <Button @click="parsingName" label="WQA" severity="warning" v-if="IsWQAName" size="small" /> -->
               </InputGroup>
-               <p class="text-xs text-gray-500">Пример: 50-WQA-7-66-0.56-z</p>
+               <div class="flex items-center gap-5 mt-2">
+                 <InputSwitch v-model="isAutoName" />
+                    <p class=" text-xs text-gray-500 ">Автозаполнение (WQA)</p>
+           
+                  </div>
+               <!-- <p class="text-xs text-gray-500">Пример: 50-WQA-7-66-0.56-z</p> -->
             </div>
             <div class="input-group">
               <label class="input-group__label">Тип *</label>
@@ -419,14 +479,14 @@ const { bubbleChartProps } = useBubbleChart({
               <!-- <small id="username-help">Enter your username to reset your password.</small> -->
             </div>
             <div class="input-group">
-              <label class="input-group__label">Номинальная рабочая точка Q
+              <label class="input-group__label">Номинальная рабочая точка Q (м³/ч)
               </label>
               <InputNumber v-model="pump.nominal_q" :minFractionDigits="1" inputId="withoutgrouping" />
 
               <!-- <small id="username-help">Enter your username to reset your password.</small> -->
             </div>
             <div class="input-group">
-              <label class="input-group__label">Номинальная рабочая точка H
+              <label class="input-group__label">Номинальная рабочая точка H (м.в.ст.)
               </label>
               <InputNumber v-model="pump.nominal_h" :minFractionDigits="1" inputId="withoutgrouping" />
 
@@ -471,12 +531,9 @@ const { bubbleChartProps } = useBubbleChart({
             </div>
 
 
+
             <div class="input-group">
-              <label class="input-group__label">Материал вала</label>
-              <InputText v-model="pump.shaft" aria-describedby="username-help" />
-            </div>
-            <div class="input-group">
-              <label class="input-group__label">Материал насоса</label>
+              <label class="input-group__label">Материал насоса и колеса</label>
               <InputText v-model="pump.pump" aria-describedby="username-help" />
             </div>
             <div class="input-group">
@@ -494,7 +551,7 @@ const { bubbleChartProps } = useBubbleChart({
             <div class="input-group ">
               <label class="input-group__label flex items-center gap-2 cursor-pointer">Допустимая погрешность <i class="pi pi-info-circle" v-tooltip="
                 {
-                value: 'Погрешность при подборе насоса по оси Q и H, желательно ставить минимум 1 пункт',
+                value: 'Погрешность при подборе насоса по оси Q (м³/ч) и H, желательно ставить минимум 1 пункт',
                   pt: {
                   arrow: {
                     style: {
@@ -509,10 +566,16 @@ const { bubbleChartProps } = useBubbleChart({
                 inputId="withoutgrouping" />
                 
             </div>
+  
+  <div class="input-group">
+                <label class="input-group__label">Количество полюсов</label>
+                <InputText v-model="pump.pole" aria-describedby="username-help" />
+              </div>
             <div class="input-group">
-              <label class="input-group__label">Количество полюсов</label>
-              <InputNumber v-model="pump.pole" aria-describedby="username-help" />
-            </div>
+                <label class="input-group__label">Тип исполнения</label>
+                <InputText v-model="pump.execution" aria-describedby="username-help" />
+              </div>
+            
             <div class="input-group">
               <label class="input-group__label">Примечание</label>
 
@@ -537,7 +600,7 @@ const { bubbleChartProps } = useBubbleChart({
               <InputText v-model="pump.material_standart" aria-describedby="username-help" />
             </div>
    <div class="input-group">
-                <label class="input-group__label">Нижний подшипник:</label>
+                <label class="input-group__label">На насосе:</label>
                 <InputText v-model="pump.bearing_down_standart" aria-describedby="username-help" />
               </div>
                <div class="input-group">
@@ -569,7 +632,7 @@ const { bubbleChartProps } = useBubbleChart({
                 <InputText v-model="pump.oring_standart" aria-describedby="username-help" />
               </div>
             <div class="input-group">
-              <label class="input-group__label">Верхний подшипник:</label>
+              <label class="input-group__label">На двигателе:</label>
               <InputText v-model="pump.bearing_up_standart" aria-describedby="username-help" />
             </div> 
             <div class="input-group">
@@ -591,7 +654,7 @@ const { bubbleChartProps } = useBubbleChart({
               <InputText v-model="pump.material_order" aria-describedby="username-help" />
             </div>
    <div class="input-group">
-                <label class="input-group__label">Нижний подшипник:</label>
+                <label class="input-group__label">На насосе:</label>
                 <InputText v-model="pump.bearing_down_order" aria-describedby="username-help" />
               </div>
 <div class="input-group">
@@ -624,7 +687,7 @@ const { bubbleChartProps } = useBubbleChart({
                 <InputText v-model="pump.oring_order" aria-describedby="username-help" />
               </div>
             <div class="input-group">
-              <label class="input-group__label">Верхний подшипник:</label>
+              <label class="input-group__label">На двигателе:</label>
               <InputText v-model="pump.bearing_up_order" aria-describedby="username-help" />
             </div> 
             <div class="input-group">
@@ -825,21 +888,21 @@ const { bubbleChartProps } = useBubbleChart({
           </div>
           <div class="sm:flex gap-5  mt-5">
             <div class="input-group">
-              <label class="input-group__label">Шкала Q (X), минимум</label>
+              <label class="input-group__label">Шкала Q (м³/ч) (X), минимум</label>
               <InputNumber v-model="pump.minx" inputId="withoutgrouping" />
             </div>
             <div class="input-group">
-              <label class="input-group__label">Шкала Q (X), максимум</label>
+              <label class="input-group__label">Шкала Q (м³/ч) (X), максимум</label>
               <InputNumber v-model="pump.maxx" inputId="withoutgrouping" />
             </div>
           </div>
           <div class="sm:flex gap-5  mt-5 mb-2">
             <div class="input-group">
-              <label class="input-group__label">Шкала H (Y), минимум</label>
+              <label class="input-group__label">Шкала H (м.в.ст.) (Y), минимум</label>
               <InputNumber v-model="pump.miny" inputId="withoutgrouping" />
             </div>
             <div class="input-group">
-              <label class="input-group__label">Шкала H (Y), максимум</label>
+              <label class="input-group__label">Шкала H (м.в.ст.) (Y), максимум</label>
               <InputNumber v-model="pump.maxy" inputId="withoutgrouping" />
             </div>
           </div>
