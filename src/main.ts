@@ -32,7 +32,7 @@ import Tooltip from 'primevue/tooltip';
 import MultiSelect from 'primevue/multiselect';
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon';
-
+import InputMask from 'primevue/inputmask';
 
 
 import ToastService from 'primevue/toastservice';
@@ -80,5 +80,6 @@ app.component('InputSwitch', InputSwitch)
 app.component('MultiSelect', MultiSelect)
 app.component('InputGroup', InputGroup)
 app.component('InputGroupAddon', InputGroupAddon)
+app.component('InputMask', InputMask)
 
 app.mount('#app')

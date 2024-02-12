@@ -10,7 +10,7 @@ let isErrors: boolean = false
 let errorsMessage: string[] = []
 let formula: string 
 
-export const itemPumpForExel = (el: any, types: IType[], i: number) => {
+export const itemPumpForExel = (el: any, types: IType, i: number) => {
   errorsMessage = []
   isErrors = false
 
@@ -28,7 +28,7 @@ export const itemPumpForExel = (el: any, types: IType[], i: number) => {
   else {
     fullName = el.name ?? 'Насос'
   }
-
+// @ts-ignore
   let typeEltement = types.value.find(item => item.type == el.type)
 
 

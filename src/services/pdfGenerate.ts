@@ -1,4 +1,6 @@
 import { APIPDF } from "../api/api"
+import { API } from "../api/api"
+
 
 function isWqaName(name: string | undefined) {
     if (name && name.indexOf("WQA")) {
@@ -141,6 +143,8 @@ function findInlineHeight(
 }
 // @ts-ignore
 function mapTableBodies(innerTableCell, maxWidth, usedWidth) {
+
+
     // @ts-ignore
     const inlineHeight = findInlineHeight(innerTableCell, maxWidth, usedWidth)
 
@@ -272,6 +276,9 @@ function applyVerticalAlignment(
 
 
 export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: any) => {
+
+
+
     return {
         info: {
             title: 'Название фирмы',
@@ -312,7 +319,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
         //  		}
         //  	]
         //  },
-        watermark: { text: 'ВОЛГА', color: 'blue', opacity: 0.1, bold: true, angle: 0, fontSize: 120 },
+        watermark: { text: 'ВОЛГА', color: '#00416A', opacity: 0.08, bold: true, angle: 0, fontSize: 120, font: 'DaysSansBlack', },
         //страница 1
         content: [{
             table: {
@@ -329,7 +336,8 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         rowSpan: 4,
                         text: 'Лист подбора\n насосного агрегата',
                         alignment: 'center',
-                        margin: [0, -5, 0, 0],
+                        margin: [0, -5, 0, 0]
+                        
                     },
                     {
                         text: 'Дата подбора:',
@@ -2632,7 +2640,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
             },
         },
         ],
-
+     
         images: {
             list3: `${APIPDF}api/image/pdf/list3.jpg`,
             list4_1: `${APIPDF}api/image/pdf/list4_1.jpg`,

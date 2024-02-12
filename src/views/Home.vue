@@ -15,7 +15,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 
-const pumps = ref<IPump[]>([])
+const pumps = ref<IPump[] | []>([])
 const loading = ref(false)
 
 const filters = ref({
@@ -34,15 +34,29 @@ const loadAllPump = async () => {
   fetch(`${API}/api/pump/read.php`)
     .then((response) => response.json())
     .then((data) => {
+
+      // if (!data.data) {
+      //   return
+      // }
         pumps.value = data.data
         loading.value = false
+    })
+    .catch((err) => {
+      
+      loading.value = false
+      console.log(err)
+    })
+    .finally(() => {
+      
+       loading.value = false
     })
 }
 
 const pampForTable = computed((): IPump[] => {
-  const newArray = [...pumps.value]
+  const newArray = pumps.value
+  
 
-for (let i = 0; i < newArray.length; i++) {
+for (let i = 0; i < newArray?.length; i++) {
         const obj = newArray[i]       
         for (let key in obj) {
           if (obj.hasOwnProperty(key)) {   

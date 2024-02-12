@@ -7,15 +7,18 @@ import type { IPumpSelect } from "../types/IPumpSelect"
 import { BubbleChart, useBubbleChart } from "vue-chart-3"
 import { Chart, registerables } from 'chart.js'
 import ChartAnnotation from 'chartjs-plugin-annotation'
-import { API } from "../api/api"
+import { API, APIPDF  } from "../api/api"
 import { usePDF } from 'vue3-pdfmake'
 import Logo from '../assets/image/logo2.png'
+import ContactForm from '../components/ContactForm.vue'
+import Footer from '../components/Footer.vue'
 import { useToastStore } from '../stores/toastStore'
 import { useWidthChart } from '../services/useWidthChart'
 
 const widthChart = useWidthChart()
 console.log(widthChart)
 const useStore = useToastStore()
+
 
 import { pdfGenerate } from "../services/pdfGenerate"
 
@@ -66,12 +69,21 @@ const coordinates = ref<any[]>([])
 const errorModal = ref<boolean>(false)
 const pumpsModal = ref<boolean>(false)
 const messageModal = ref<boolean>(false)
+const contactModal = ref<boolean>(false)
 const messageTextForSend = ref<string>('')
 const loadingPdf = ref<boolean>(false)
 const orderList = ref<string | null>(null)
 
 
 const date = new Date().toLocaleDateString('ru-RU')
+
+
+
+const closeModal = (status: string) => {
+
+  contactModal.value = false
+
+}
 
 // преобразование  формулы
 function formulaCreate(formula: string, x: string, name: string) {
@@ -163,8 +175,9 @@ const loadAllPump = async () => {
   fetch(`${API}/api/pump/read.php`)
     .then((response) => response.json())
     .then((data) => {
+      console.log(data.data)
 
-      for (let i = 0; i < data.data.length; i++) {
+      for (let i = 0; i < data.data?.length; i++) {
         const obj = data.data[i]
         for (let key in obj) {
           if (obj.hasOwnProperty(key)) {
@@ -180,6 +193,15 @@ const loadAllPump = async () => {
       pumps.value = data.data
       loading.value = false
       loadTypes()
+    })
+    .catch((err) => {
+
+      loading.value = false
+      console.log(err)
+    })
+    .finally(() => {
+
+      loading.value = false
     })
 }
 
@@ -352,7 +374,8 @@ const showChartData = (id: number) => {
     if (pumpSelect.pumpY  && pumpSelect.pumpY) {
       chartData.datasets[1].data = [{ 'x': pumpSelect.pumpX, 'y': pumpSelect.pumpY }]
       // @ts-ignore
-       options.plugins.annotation.annotations = {
+      options.plugins.annotation.annotations = {
+         // @ts-ignore
       line1: {
         type: 'line',
         yMin: pumpSelect.pumpY,
@@ -532,15 +555,36 @@ const textForNull = (item: string | number | null | undefined) => {
   }
 }
 
-const downloadPdf = () => {
+const downloadPdf = async () => {
 
+options.plugins.annotation.annotations.line4.opacity = 0   
  
+
+  setTimeout(() => {
+
   if (!itemPump.value) {
     message.title = 'Выберите насос'
     message.text = 'Для скачивания листа подбора, выберите насос из списка'
     errorModal.value = true
     return
   }
+
+  pdfmake.fonts = {
+    DaysSansBlack: {
+      normal: `${APIPDF}fonts/Days-Sans-Black.ttf`,
+      bold: `${APIPDF}fonts/Days-Sans-Black.ttf`,
+      italics: `${APIPDF}fonts/Days-Sans-Black.ttf`,
+      bolditalics: `${APIPDF}fonts/Days-Sans-Black.ttf`
+    },
+      Roboto: {
+      normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
+      bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
+      italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf',
+      bolditalics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf'
+    },
+  }
+
+
  loadingPdf.value = true
   let canvas = document.getElementById('bubble-chart')
   // @ts-ignore
@@ -548,8 +592,17 @@ const downloadPdf = () => {
 
   pdfmake.createPdf(docinfo).download(`Волга ${itemPump.value.name}.pdf`)
     .then(() => {
-    loadingPdf.value = false
+      loadingPdf.value = false
+    options.plugins.annotation.annotations.line4.opacity = 0.1
   })
+
+
+    
+  }, 300)
+
+    
+  
+ 
 }
 
 
@@ -591,231 +644,239 @@ const sendMessage = () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative">
-    <div class="wrapper-logo">
-        <a href="https://volga.su" target="_blank">
-        <img class="wrapper-logo__img"  :src="Logo" alt="logo" />
-        </a>
+  <div class=" relative h-screen flex flex-col">
+    <div class=" grow shrink-0">
+      <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative">
+      <div class="wrapper-logo">
+          <a href="https://volga.su" target="_blank">
+          <img class="wrapper-logo__img"  :src="Logo" alt="logo" />
+          </a>
 
-      </div>
-  
-    <h4 class="text-center text-2xl font-semibold">ПРОГРАММА ПОДБОРА НАСОСНЫХ АГРЕГАТОВ</h4>
-    <h4 class="text-center text-2xl font-semibold">"ВОЛГА" SELECT</h4>
-    <h5 class="text-center text-xl font-semibold mt-12">ВЫБЕРИТЕ ТИП НАСОСНОГО АГРЕГАТА</h5>
-
-
-    <div class="mt-10 sm:mt-20">
-      <div class="flex flex-col flex-col-reverse sm:flex-row justify-center items-center gap-5">
-        <div>
-          <Dropdown class=" w-72" @change="changes" v-model="pumpSelect.type" :options="types" optionLabel="type"
-            optionValue="type" placeholder="Тип насоса" />
         </div>
-        <Image :src="pumpSelect.image" alt="насос" width="150" preview />
-      </div>
-    </div>
+    
+      <h4 class="text-center text-2xl font-semibold">ПРОГРАММА ПОДБОРА НАСОСНЫХ АГРЕГАТОВ</h4>
+      <h4 class="text-center text-2xl font-semibold">"ВОЛГА" SELECT</h4>
+      <h5 class="text-center text-xl font-semibold mt-12">ВЫБЕРИТЕ ТИП НАСОСНОГО АГРЕГАТА</h5>
 
-    <h5 class="text-center text-lg font-semibold mt-12">УКАЖИТЕ ВАШУ РАБОЧУЮ ТОЧКУ:</h5>
 
-    <div>
-      <div class="flex justify-center items-center gap-5 mt-5">
-        <label>Расход (Q)
-        </label>
-        <InputGroup class=" w-48 sm:w-60">
-         <InputNumber v-model="pumpSelect.pumpX" :minFractionDigits="1" inputId="withoutgrouping" />
-   <InputGroupAddon class=" w-16">м³/ч</InputGroupAddon>
-        </InputGroup>
-       
-      </div>
-      <div class="flex justify-center items-center gap-5 mt-5">
-        <label>Напор (H)
-        </label>
-        <InputGroup class=" w-48 sm:w-60">
-        <InputNumber  v-model="pumpSelect.pumpY" :minFractionDigits="1" inputId="withoutgrouping" />
-  <InputGroupAddon class=" w-16">м.в.ст.</InputGroupAddon>
-    </InputGroup>
-      </div>
-
-    </div>
-    <div class="flex justify-center items-center gap-5 mt-5">
-      <Button class=" w-full sm:w-1/3" @click="findPump" label="ПОДОБРАТЬ" />
-    </div>
-
-    <div class="flex justify-center items-center gap-5 mt-5">
-      <Button class="w-3/4 sm:w-1/4" severity="secondary" @click="allPump" label="СПИСОК ВСЕХ НАСОСОВ" />
-    </div>
-
-  </div>
-
-  <div v-if="pumpsEvent.length > 0" class="mx-auto max-w-full px-4 py-6 sm:px-4 lg:px-4 ">
-    <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            currentPageReportTemplate="{first} до {last}, из {totalRecords}"
-    v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="pumpsEvent" stripedRows tableStyle="min-width: 50rem">
-
-      <template #header>
-         <div class="flex justify-content-end mb-3">
-                    <span class="p-input-icon-left">
-                        <i class="pi pi-search" />
-                        <InputText v-model="filters['global'].value" placeholder="Поиск" />
-                    </span>
-                </div>
-        <div style="text-align:left">
-          <p class="mb-2">Выбранные поля:</p>
-          <MultiSelect class="w-full " emptyFilterMessage="Не найдено" filter :modelValue="selectedColumns" :options="columns" optionLabel="header"
-            @update:modelValue="onToggle" display="chip" placeholder="Выберете столбец" />
+      <div class="mt-10 sm:mt-20">
+        <div class="flex flex-col flex-col-reverse sm:flex-row justify-center items-center gap-5">
+          <div>
+            <Dropdown class=" w-72" @change="changes" v-model="pumpSelect.type" :options="types" optionLabel="type"
+              optionValue="type" placeholder="Тип насоса" />
+          </div>
+          <Image :src="pumpSelect.image" alt="насос" width="150" preview />
         </div>
-      </template>
-      <Column field="name" header="Название" style="width: 250px" :pt="{
-        root: { style: { textAlign: 'center' } },
-        headerTitle: { style: { textAlign: 'center', width: '100%' } }
-      }">
-        <template #body="slotProps">
-          <p class="cursor-pointer text-blue-700 underline hover:text-blue-900" @click="showChartData(slotProps.data.id)">
-            {{
-              slotProps.data.name }}
-          </p>
+      </div>
+
+      <h5 class="text-center text-lg font-semibold mt-12">УКАЖИТЕ ВАШУ РАБОЧУЮ ТОЧКУ:</h5>
+
+      <div>
+        <div class="flex justify-center items-center gap-5 mt-5">
+          <label>Расход (Q)
+          </label>
+          <InputGroup class=" w-48 sm:w-60">
+          <InputNumber v-model="pumpSelect.pumpX" :minFractionDigits="1" inputId="withoutgrouping" />
+    <InputGroupAddon class=" w-16">м³/ч</InputGroupAddon>
+          </InputGroup>
+        
+        </div>
+        <div class="flex justify-center items-center gap-5 mt-5">
+          <label>Напор (H)
+          </label>
+          <InputGroup class=" w-48 sm:w-60">
+          <InputNumber  v-model="pumpSelect.pumpY" :minFractionDigits="1" inputId="withoutgrouping" />
+    <InputGroupAddon class=" w-16">м.в.ст.</InputGroupAddon>
+      </InputGroup>
+        </div>
+
+      </div>
+      <div class="flex justify-center items-center gap-5 mt-5">
+        <Button class=" w-full sm:w-1/3" @click="findPump" label="ПОДОБРАТЬ" />
+      </div>
+
+      <div class="flex justify-center items-center gap-5 mt-5">
+        <Button class="w-3/4 sm:w-1/4" severity="secondary" @click="allPump" label="СПИСОК ВСЕХ НАСОСОВ" />
+      </div>
+
+    </div>
+
+    <div v-if="pumpsEvent.length > 0" class="mx-auto max-w-full px-4 py-6 sm:px-4 lg:px-4 ">
+      <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+              currentPageReportTemplate="{first} до {last}, из {totalRecords}"
+      v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="pumpsEvent" stripedRows tableStyle="min-width: 50rem">
+
+        <template #header>
+          <div class="flex justify-content-end mb-3">
+                      <span class="p-input-icon-left">
+                          <i class="pi pi-search" />
+                          <InputText v-model="filters['global'].value" placeholder="Поиск" />
+                      </span>
+                  </div>
+          <div style="text-align:left">
+            <p class="mb-2">Выбранные поля:</p>
+            <MultiSelect class="w-full " emptyFilterMessage="Не найдено" filter :modelValue="selectedColumns" :options="columns" optionLabel="header"
+              @update:modelValue="onToggle" display="chip" placeholder="Выберете столбец" />
+          </div>
         </template>
-      </Column>
-      <Column sortable v-for="(col, index) of selectedColumns" :field="col.field"
-        :header="col.header" :key="col.field + '_' + index" :pt="{
+        <Column field="name" header="Название" style="width: 250px" :pt="{
           root: { style: { textAlign: 'center' } },
           headerTitle: { style: { textAlign: 'center', width: '100%' } }
         }">
+          <template #body="slotProps">
+            <a href="#chart" class="cursor-pointer text-blue-700 underline hover:text-blue-900" @click="showChartData(slotProps.data.id)">
+              {{
+                slotProps.data.name }}
+            </a>
+          </template>
+        </Column>
+        <Column sortable v-for="(col, index) of selectedColumns" :field="col.field"
+          :header="col.header" :key="col.field + '_' + index" :pt="{
+            root: { style: { textAlign: 'center' } },
+            headerTitle: { style: { textAlign: 'center', width: '100%' } }
+          }">
 
-      </Column>
+        </Column>
 
 
-    </DataTable>
-    <div class="mx-auto max-w-7xl py-6 sm:px-6 mt-10">
-      <div class="flex flex-col lg:flex-row justify-center items-center gap-5">
-        <div class="w-full sm:w-1/2 ">
-          <BubbleChart style="width: 100%; height: 500px;" ref="chartRef" v-bind="bubbleChartProps" />
-        </div>
-        <div class=" w-full sm:w-1/2 ">
-          <table class="table">
-            <tbody>
-              <tr>
-                <td colspan="2">Модель</td>
-                <td data-settings="name">{{ itemPump?.name }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Тип насоса</td>
-                <td class="type-out">{{ textForNull(itemPump?.type) }}</td>
-              </tr>
-              <tr>
-                <td rowspan="3" class="text-vertical">Фактическая характеристика</td>
-                <td>Расход Q (м³/ч)</td>
-                <td data-settings="x">{{ textForNull(pumpSelect.pumpX) }}</td>
-              </tr>
-              <tr>
-                <td>Напор H (м.в.ст.)</td>
-                <td data-settings="y"> {{ textForNull(pumpSelect.pumpY) }}</td>
-              </tr>
-              <tr>
-                <td>Диаметр выхода</td>
-                <td class="diameter-out">{{ textForNull(itemPump?.diameter) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">КПД (%)</td>
-                <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Мощность (кВт)</td>
-                <td class="power-out">{{ textForNull(itemPump?.power) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Скорость вращения вала (rpm)</td>
-                <td class="speed-out">{{ textForNull(itemPump?.speed) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Частота переменного тока (Hz)</td>
-                <td class="frequency-out">{{ textForNull(itemPump?.frequency) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Количество фаз</td>
-                <td class="phase-out">{{ textForNull(itemPump?.phase) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Количество полюсов</td>
-                <td class="pole-out">{{ textForNull(itemPump?.pole) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Номинальное напряжение, V</td>
-                <td class="voltage-out">{{ textForNull(itemPump?.voltage) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Способ запуска</td>
-                <td class="launch-out">{{ textForNull(itemPump?.launch) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Торцевое уплотнение</td>
-                <td class="seal-out">{{ textForNull(itemPump?.seal) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Материал вала</td>
-                <td class="shaft-out">{{ textForNull(itemPump?.shaft) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Материал насоса и колеса</td>
-                <td class="pump-out">{{ textForNull(itemPump?.pump) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Рабочее давление, бар</td>
-                <td class="bar-out">{{ textForNull(itemPump?.bar) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Номинальная сила тока, А</td>
-                <td class="strength-out">{{ textForNull(itemPump?.current_strength) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Степень защиты, IP</td>
-                <td class="ip-out">{{ textForNull(itemPump?.ip) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Вес</td>
-                <td class="weight-out">{{ textForNull(itemPump?.weight) }}</td>
-              </tr>
-              <tr>
-                <td colspan="2">Примечание</td>
-                <td class="note-out">{{ textForNull(itemPump?.note) }}</td>
-              </tr>
+      </DataTable>
+      <div class="mx-auto max-w-7xl py-6 sm:px-6 mt-10">
+        <div class="flex flex-col lg:flex-row justify-center items-center gap-5">
+          <div class="w-full sm:w-1/2 ">
+            <BubbleChart style="width: 100%; height: 500px;" ref="chartRef" v-bind="bubbleChartProps" />
+          </div>
+          <div id="chart" class=" w-full sm:w-1/2 ">
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td colspan="2">Модель</td>
+                  <td data-settings="name">{{ itemPump?.name }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Тип насоса</td>
+                  <td class="type-out">{{ textForNull(itemPump?.type) }}</td>
+                </tr>
+                <tr>
+                  <td rowspan="3" class="text-vertical">Фактическая характеристика</td>
+                  <td>Расход Q (м³/ч)</td>
+                  <td data-settings="x">{{ textForNull(pumpSelect.pumpX) }}</td>
+                </tr>
+                <tr>
+                  <td>Напор H (м.в.ст.)</td>
+                  <td data-settings="y"> {{ textForNull(pumpSelect.pumpY) }}</td>
+                </tr>
+                <tr>
+                  <td>Диаметр выхода</td>
+                  <td class="diameter-out">{{ textForNull(itemPump?.diameter) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">КПД (%)</td>
+                  <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Мощность (кВт)</td>
+                  <td class="power-out">{{ textForNull(itemPump?.power) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Скорость вращения вала (rpm)</td>
+                  <td class="speed-out">{{ textForNull(itemPump?.speed) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Частота переменного тока (Hz)</td>
+                  <td class="frequency-out">{{ textForNull(itemPump?.frequency) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Количество фаз</td>
+                  <td class="phase-out">{{ textForNull(itemPump?.phase) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Количество полюсов</td>
+                  <td class="pole-out">{{ textForNull(itemPump?.pole) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Номинальное напряжение, V</td>
+                  <td class="voltage-out">{{ textForNull(itemPump?.voltage) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Способ запуска</td>
+                  <td class="launch-out">{{ textForNull(itemPump?.launch) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Торцевое уплотнение</td>
+                  <td class="seal-out">{{ textForNull(itemPump?.seal) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Материал вала</td>
+                  <td class="shaft-out">{{ textForNull(itemPump?.shaft) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Материал насоса и колеса</td>
+                  <td class="pump-out">{{ textForNull(itemPump?.pump) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Рабочее давление, бар</td>
+                  <td class="bar-out">{{ textForNull(itemPump?.bar) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Номинальная сила тока, А</td>
+                  <td class="strength-out">{{ textForNull(itemPump?.current_strength) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Степень защиты, IP</td>
+                  <td class="ip-out">{{ textForNull(itemPump?.ip) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Вес</td>
+                  <td class="weight-out">{{ textForNull(itemPump?.weight) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="2">Примечание</td>
+                  <td class="note-out">{{ textForNull(itemPump?.note) }}</td>
+                </tr>
 
-              <tr>
-                <td colspan="3">
-                  <p class="text-center">
-                    С дополнительными данными, можно ознакомиться в каталоге
-                    насосных агрегатов по ссылке -
-                    <a class="text-center text-sky-600 underline hover:text-sky-800" href="https://volga.su/catalog"
-                      target="_blank">КАТАЛОГ</a>
-                  </p>
-                </td>
-              </tr>
-               <tr>
+                <tr>
                   <td colspan="3">
                     <p class="text-center">
-                      Ознакомится с ценами на насосные агрегаты -
-                      <a class="text-center text-sky-600 underline hover:text-sky-800" href="https://volga.su/price"
-                        target="_blank">Прайс</a>
+                      С дополнительными данными, можно ознакомиться в каталоге
+                      насосных агрегатов по ссылке -
+                      <a class="text-center text-sky-600 underline hover:text-sky-800" href="https://volga.su/catalog"
+                        target="_blank">КАТАЛОГ</a>
                     </p>
                   </td>
                 </tr>
-            </tbody>
-          </table>
+                <tr>
+                    <td colspan="3">
+                      <p class="text-center">
+                        Ознакомится с ценами на насосные агрегаты -
+                        <a class="text-center text-sky-600 underline hover:text-sky-800" href="https://volga.su/price"
+                          target="_blank">Прайс</a>
+                      </p>
+                    </td>
+                  </tr>
+              </tbody>
+            </table>
 
-          <Button class=" w-full" :loading="loadingPdf" @click="downloadPdf" label="СКАЧАТЬ ЛИСТ ПОДБОРА" />
-          <Button v-if="orderList" class="mt-5 w-full"  @click="downloadPdf" :label="orderList"  />
+            <Button class=" w-full" :loading="loadingPdf" @click="downloadPdf" label="СКАЧАТЬ ЛИСТ ПОДБОРА" />
+            <Button v-if="orderList" class="mt-5 w-full"  @click="contactModal=true" :label="orderList"  />
+          </div>
         </div>
       </div>
+
+
     </div>
 
-
-  </div>
-
-  <div class="mt-5 flex justify-center pb-10">
-    <div @click="messageModal = true"
-      class="mt-10 pt-4 pb-4 pr-8 pl-8 border border-red-600 text-red-500 hover:text-red-700 hover:border-red-700 cursor-pointer">
-      <p class="text-center text-danger">СООБЩИТЬ ОБ ОШИБКЕ</p>
-      <p class="text-center text-danger">ВНЕСТИ ПРЕДЛОЖЕНИЕ</p>
+    <div class="mt-5 flex justify-center pb-10">
+      <div @click="messageModal = true"
+        class="mt-10 pt-4 pb-4 pr-8 pl-8 border border-red-600 text-red-500 hover:text-red-700 hover:border-red-700 cursor-pointer">
+        <p class="text-center text-danger">СООБЩИТЬ ОБ ОШИБКЕ</p>
+        <p class="text-center text-danger">ВНЕСТИ ПРЕДЛОЖЕНИЕ</p>
+      </div>
     </div>
+    </div>
+    
+
+    <Footer></Footer>
+
   </div>
 
 
@@ -899,6 +960,19 @@ const sendMessage = () => {
     </template>
 
   </Dialog>
+
+  <Dialog v-model:visible="contactModal" modal :showHeader="false"  dismissableMask
+      :closable="false" :pt="{
+        root: 'border-none',
+        title: {
+          style: 'text-align: center;width: 100%'
+        },
+        footer: {
+          style: 'text-align: center;width: 100%'
+        }
+      }">
+     <ContactForm :pumpname="itemPump?.name ? { name:  itemPump.name} : { name: '' }" @closeModal="closeModal"></ContactForm>
+    </Dialog>
 </template>
 
 <style scope>

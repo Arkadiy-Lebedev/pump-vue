@@ -36,9 +36,10 @@ onMounted(() => {
 
 
 
-let pumpsData = []
-let errorsArray = ref([])
+let pumpsData: any[] = []
+let errorsArray = ref<any[]>([])
 
+// @ts-ignore
 const loadFile = (evt) => {
   console.log(evt)
 label.value = evt.target.files[0].name
@@ -48,6 +49,7 @@ label.value = evt.target.files[0].name
   var selectedFile = evt.target.files[0]
   var reader = new FileReader()
   reader.onload = function (event) {
+     // @ts-ignore
     var data = event.target.result
     var workbook = read(data, {
       type: 'binary'
@@ -56,7 +58,7 @@ label.value = evt.target.files[0].name
     workbook.SheetNames.forEach(function (sheetName) {
 
       console.log(456456)
-
+ // @ts-ignore
       var XL_row_object = utils.sheet_to_row_object_array(workbook.Sheets[sheetName])
       XL_row_object.splice(0, 2)
       console.log(XL_row_object)
@@ -64,14 +66,15 @@ label.value = evt.target.files[0].name
 
 
       // проверка на ошибка   
-
+      // @ts-ignore
       XL_row_object.forEach((el, i) => {
-
+        // @ts-ignore
         let resp: any = itemPumpForExel(el, types, i)
 
         // console.log(resp)
 
         if (resp?.status) {
+           // @ts-ignore
           errorsArray.value.push(resp)
 
         } else {
@@ -82,15 +85,15 @@ label.value = evt.target.files[0].name
       })
 
       if (errorsArray.value.length) {
+        // @ts-ignore
         fileInput.value.value = ''
         
         return
       } else {
+         // @ts-ignore
         example(pumpsData)
       }
 
-      console.log(errorsArray)
-      console.log(pumpsData)
 
     })
 
@@ -98,8 +101,9 @@ label.value = evt.target.files[0].name
   reader.readAsBinaryString(selectedFile)      
  
 }
-
+// @ts-ignore
 const example = async (data) => {
+   // @ts-ignore
   await Promise.all(data.map(item => {
     let formData = new FormData()
     for (let key in item) {
@@ -145,9 +149,9 @@ const example = async (data) => {
           </div>
         </div>
 
-        <div class="mb-3 mt-5" v-for="(elem, index) of errorsArray" :key=elem.index>
+        <div class="mb-3 mt-5" v-for="(elem, ind) of errorsArray" :key=ind>
           <InlineMessage severity="error">Строка {{ elem.index + 4 }},
-            насос: {{ elem.pump.name }}. <div>Ошибка: {{ elem.message.join(", ") }}</div>
+            насос: {{ elem.pump.name }}. <div>Ошибка: {{ elem?.message.join(", ") }}</div>
           </InlineMessage>
         </div>
       </template>
