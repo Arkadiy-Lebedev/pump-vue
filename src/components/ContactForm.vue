@@ -116,16 +116,16 @@ const submitForm = () => {
         <InputMask id="basic" v-model="contact.inn" mask="9999999999" placeholder="" />
       </div>
       <div class="input-group">
-        <label class="input-group__label">ФИО *</label>
-        <InputText v-model="contact.name" aria-describedby="username-help" />
+        <label class="input-group__label">ФИО *</label>        
+        <Textarea v-model="contact.name" autoResize rows="2" cols="30" />
       </div>
       <div class="input-group">
         <label class="input-group__label">Контактный телефон *</label>
         <InputMask id="basic" v-model="contact.phone" mask="+7-999-999-99-99" placeholder="+7-999-999-99-99" />
       </div>
       <div class="input-group">
-        <label class="input-group__label">Электронная почта *</label>
-        <InputText v-model="contact.mail" aria-describedby="username-help" />
+        <label class="input-group__label">Электронная почта *</label>        
+        <Textarea v-model="contact.mail" autoResize rows="2" cols="30" />
       </div>
       <p>* - обязательно к заполнению</p>
 

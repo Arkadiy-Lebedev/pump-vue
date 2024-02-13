@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
 import axios from 'axios'
 import type { Ref } from 'vue'
-import { API } from "../api/api"
+import { onMounted, ref } from "vue"
+import { useRouter } from 'vue-router'
 import { read, utils } from "xlsx"
-import type { IPump } from "../types/IPump"
-import type { IType } from "../types/IType"
+import { API } from "../api/api"
 import { itemPumpForExel } from "../services/itemPumpForExel"
 import { useToastStore } from '../stores/toastStore'
-import { useRouter } from 'vue-router'
+import type { IType } from "../types/IType"
 const useStore = useToastStore()
 
 const router = useRouter()
+
+interface IPumpsName {
+    id: number,
+    name: string,
+    phase:string,
+    efficiency:string,
+    voltage:string,
+}
 
 
 const types: Ref<IType[]> = ref([
@@ -24,6 +31,14 @@ const types: Ref<IType[]> = ref([
 
 const fileInput = ref(null)
 const label = ref('Загрузить')
+const pumps = ref<IPumpsName[]>([
+  { id: 0,
+    name: '',
+    phase:'',
+    efficiency:'',
+    voltage:'',
+  }
+])
 
 const loadTypes = async () => {
   axios.get(`${API}api/type/read.php`)
@@ -34,6 +49,14 @@ onMounted(() => {
   loadTypes()
 })
 
+
+const loadPumpNames = async () => {
+  axios.get(`${API}api/pump/read_name.php`)
+    .then((data) => {   
+      pumps.value = data.data.data
+    })
+}
+loadPumpNames()
 
 
 let pumpsData: any[] = []
@@ -105,6 +128,20 @@ label.value = evt.target.files[0].name
 const example = async (data) => {
    // @ts-ignore
   await Promise.all(data.map(item => {
+
+   let pump = pumps.value.find(el => {   
+    if(el.name == item.name && el.phase == item.phase && el.efficiency == item.efficiency && el.voltage == item.voltage){
+        return el
+    } else{
+      return false
+    }
+  })
+
+
+   if(pump){
+    item.id = pump.id
+   }
+
     let formData = new FormData()
     for (let key in item) {
       // @ts-ignore
@@ -117,8 +154,11 @@ const example = async (data) => {
       }
     }
 
-    
-    return axios.post(`${API}api/pump/create.php`, formData)
+      if( item.id>0 ){
+        return axios.post(`${API}api/pump/update.php`, formData)
+      } else {
+        return axios.post(`${API}api/pump/create.php`, formData)
+      }
 
    }))
 
@@ -131,14 +171,15 @@ const example = async (data) => {
 <template>
   <!-- <SubHeader title="Exel" /> -->
   <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
     <Card class=" mt-5">
       <template #content>
         <div class="download__wrapper mb-2">
 
           <div class="" id="download-file">
   <div>
-              <p class="mb-3">Загрузите файл Excel:</p>
-              <label for="file"><i class="pi pi-upload form__icons"></i> {{ label }}</label>
+              <p class="mb-3 ">Загрузите файл Excel:</p>
+              <label for="file" class=" cursor-pointer"><i class="pi pi-upload form__icons"></i> {{ label }}</label>
               <input hidden class="select" ref="fileInput" id="file" type="file" accept=".xls, .xlsx"
                 @change="loadFile" />
             </div>

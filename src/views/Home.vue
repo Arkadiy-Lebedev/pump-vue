@@ -61,7 +61,7 @@ for (let i = 0; i < newArray?.length; i++) {
         for (let key in obj) {
           if (obj.hasOwnProperty(key)) {   
               // @ts-ignore      
-            if (obj[key] == "" | obj[key] == null | obj[key] == "null") {    
+            if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {    
                // @ts-ignore      
               obj[key] = "---"
             }
@@ -147,14 +147,14 @@ const columns = ref<IData[]>([
   { field: 'diameter', header: 'Диаметр выхода' , warn: 4 },
   { field: 'power', header: 'Мощность кВт' , warn: 5 },
   { field: 'speed', header: 'Скорость' , warn: 6 },
-  { field: 'phase', header: 'Фаза' , warn: 7 },
-  { field: 'note', header: 'Комментарий' , warn: 8 },
-  { field: 'date_update', header: 'Дата' , warn: 9 },
-  { field: 'frequency', header: 'Частота (Hz)' , warn: 10 },
-  { field: 'voltage', header: 'Напряжение (V)' , warn: 11 },
-  { field: 'launch', header: 'Запуск' , warn: 12 },
-  { field: 'efficiency', header: 'КПД (%)' , warn: 13 },
+  { field: 'phase', header: 'Фаза' , warn: 7 },  
+  { field: 'date_update', header: 'Дата' , warn: 8 },
+  { field: 'frequency', header: 'Частота (Hz)' , warn: 9 },
+  { field: 'voltage', header: 'Напряжение (V)' , warn: 10 },
+  { field: 'launch', header: 'Запуск' , warn: 11 },
+  { field: 'efficiency', header: 'КПД (%)' , warn: 12 },
   { field: 'pole', header: 'Количество полюсов' , warn: 13 },
+  { field: 'note', header: 'Комментарий' , warn: 14 },
 ])
 const selectedColumns = ref<IData[]>([
   { field: 'type', header: 'Тип', warn: 1 },
@@ -163,9 +163,9 @@ const selectedColumns = ref<IData[]>([
   { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
   { field: 'power', header: 'Мощность кВт', warn: 5 },
   { field: 'speed', header: 'Скорость', warn: 6 },
-  { field: 'phase', header: 'Фаза', warn: 7 },
-  { field: 'note', header: 'Комментарий', warn: 8 },
-  { field: 'date_update', header: 'Дата', warn: 9 },
+  { field: 'phase', header: 'Фаза', warn: 7 }, 
+  { field: 'date_update', header: 'Дата', warn: 8 },
+   { field: 'note', header: 'Комментарий', warn: 14 },
 ])
 
 

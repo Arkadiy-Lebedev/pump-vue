@@ -911,8 +911,8 @@ const { bubbleChartProps } = useBubbleChart({
 
           <Button @click="createChart" label="Смотреть график" />
 
-          <div class="w-full sm:w-7/12 mt-4">
-            <BubbleChart v-bind="bubbleChartProps" />
+          <div class="w-full  mt-4 ">
+            <BubbleChart class="chart-wrapper" v-bind="bubbleChartProps" />
           </div>
         </Fieldset>
 
@@ -937,6 +937,11 @@ const { bubbleChartProps } = useBubbleChart({
 
 
 <style>
+.chart-wrapper{
+width: 70%;
+aspect-ratio: 1 / 1;
+}
+
 .input-group {
   @apply flex flex-col max-w-xs mb-5;
 }
@@ -951,6 +956,13 @@ const { bubbleChartProps } = useBubbleChart({
 
 .input-group__label-pump {
   @apply mb-1 ;
+}
+
+@media (max-width: 480px) {
+.chart-wrapper{
+width: 100%;
+
+}
 }
 
 </style>

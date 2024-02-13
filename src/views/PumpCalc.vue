@@ -182,7 +182,7 @@ const loadAllPump = async () => {
         for (let key in obj) {
           if (obj.hasOwnProperty(key)) {
             // @ts-ignore
-            if (obj[key] == "" | obj[key] == null | obj[key] == "null") {
+               if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {    
               // @ts-ignore
               obj[key] = "---"
             }
@@ -413,9 +413,6 @@ const showChartData = (id: number) => {
       },
       line4: {
         type: 'label',
-   
-   
-      
        width: widthChart?.width,
           height: widthChart?.height,
         content: getImage(),
@@ -467,14 +464,13 @@ const columns = ref<IData[]>([
   { field: 'diameter', header: 'Диаметр выхода', warn: 4 },
   { field: 'power', header: 'Мощность кВт', warn: 5 },
   { field: 'speed', header: 'Скорость', warn: 6 },
-  { field: 'phase', header: 'Фаза', warn: 7 },
-  { field: 'note', header: 'Комментарий', warn: 8 },
-  
-  { field: 'frequency', header: 'Частота (Hz)', warn: 9 },
-  { field: 'voltage', header: 'Напряжение (V)', warn: 10 },
-  { field: 'launch', header: 'Запуск', warn: 11 },
-  { field: 'efficiency', header: 'КПД (%)', warn: 12 },
-  { field: 'pole', header: 'Количество полюсов', warn: 13 },
+  { field: 'phase', header: 'Фаза', warn: 7 },  
+  { field: 'frequency', header: 'Частота (Hz)', warn: 8 },
+  { field: 'voltage', header: 'Напряжение (V)', warn: 9 },
+  { field: 'launch', header: 'Запуск', warn: 10 },
+  { field: 'efficiency', header: 'КПД (%)', warn: 11 },
+  { field: 'pole', header: 'Количество полюсов', warn: 12 },
+   { field: 'note', header: 'Комментарий', warn: 13 },
 ])
 const selectedColumns = ref<IData[]>([
   { field: 'type', header: 'Тип', warn: 1 },
@@ -484,7 +480,7 @@ const selectedColumns = ref<IData[]>([
   { field: 'power', header: 'Мощность кВт', warn: 5 },
   { field: 'speed', header: 'Скорость', warn: 6 },
   { field: 'phase', header: 'Фаза', warn: 7 },
-  { field: 'note', header: 'Комментарий', warn: 8 },
+  { field: 'note', header: 'Комментарий', warn: 13 },
   
 ])
 
@@ -646,7 +642,7 @@ const sendMessage = () => {
 <template>
   <div class=" relative h-screen flex flex-col">
     <div class=" grow shrink-0">
-      <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative">
+      <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative 2xl:max-w-screen-2xl">
       <div class="wrapper-logo">
           <a href="https://volga.su" target="_blank">
           <img class="wrapper-logo__img"  :src="Logo" alt="logo" />
@@ -740,16 +736,16 @@ const sendMessage = () => {
 
 
       </DataTable>
-      <div class="mx-auto max-w-7xl py-6 sm:px-6 mt-10">
+      <div class="mx-auto max-w-7xl py-6 sm:px-6 mt-10 2xl:max-w-screen-2xl max-w">
         <div class="flex flex-col lg:flex-row justify-center items-center gap-5">
-          <div class="w-full sm:w-1/2 ">
-            <BubbleChart style="width: 100%; height: 500px;" ref="chartRef" v-bind="bubbleChartProps" />
+          <div id="chart" class="w-full sm:w-1/2 ">
+            <BubbleChart class="chart-wrapper" ref="chartRef" v-bind="bubbleChartProps" />
           </div>
-          <div id="chart" class=" w-full sm:w-1/2 ">
+          <div class=" w-full sm:w-1/2 ">
             <table class="table">
               <tbody>
                 <tr>
-                  <td colspan="2">Модель</td>
+                  <td colspan="2">Модель насоса</td>
                   <td data-settings="name">{{ itemPump?.name }}</td>
                 </tr>
                 <tr>
@@ -807,11 +803,11 @@ const sendMessage = () => {
                 </tr>
                 <tr>
                   <td colspan="2">Материал вала</td>
-                  <td class="shaft-out">{{ textForNull(itemPump?.shaft) }}</td>
+                  <td class="shaft-out">{{ textForNull(itemPump?.shaft_standart) }}</td>
                 </tr>
                 <tr>
-                  <td colspan="2">Материал насоса и колеса</td>
-                  <td class="pump-out">{{ textForNull(itemPump?.pump) }}</td>
+                  <td colspan="2">Материал насоса и рабочего колеса</td>
+                  <td class="pump-out">{{ textForNull(itemPump?.wheel_standart) }}</td>
                 </tr>
                 <tr>
                   <td colspan="2">Рабочее давление, бар</td>
@@ -976,6 +972,11 @@ const sendMessage = () => {
 </template>
 
 <style scope>
+.chart-wrapper{
+width: 100%;
+aspect-ratio: 1 / 1;
+}
+
 .table {
   border: 1px solid #eee;
   table-layout: fixed;
@@ -1051,5 +1052,12 @@ const sendMessage = () => {
 		margin: 0 auto;
 		width: 200px;
 	}
+}
+
+@media (max-width: 480px) {
+.chart-wrapper{
+width: 100%;
+
+}
 }
 </style>

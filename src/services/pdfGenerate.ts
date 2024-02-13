@@ -411,7 +411,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: 'Номинальная рабочая точка',
+                        text: 'Номинальная рабочая точка:',
                         alignment: 'right',
                         margin: [0, -5, 0, -2],
                     },
@@ -596,16 +596,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         text: ' ',
                     },
                     ],
-                    [{
-                        colSpan: 5,
-                        text: ' ',
-                        border: [false, true, false, true],
-                    },
-                        '',
-                        '',
-                        '',
-                        '',
-                    ],
+                   
                     [{
                         colSpan: 2,
                         text: 'Материалы',
@@ -833,16 +824,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                         '',
                     ],
-                    [{
-                        colSpan: 5,
-                        text: ' ',
-                        border: [false, true, false, true],
-                    },
-                        '',
-                        '',
-                        '',
-                        '',
-                    ],
+                
                     [{
                         colSpan: 2,
                         text: 'Размеры',
@@ -894,16 +876,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                             text: ' ',
                         },
                     ],
-                    [{
-                        colSpan: 5,
-                        text: ' ',
-                        border: [false, true, false, true],
-                    },
-                        '',
-                        '',
-                        '',
-                        '',
-                    ],
+                 
                     [{
                         colSpan: 2,
                         text: 'Двигатель',
@@ -1189,7 +1162,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: 'Номинальная рабочая точка',
+                        text: 'Номинальная рабочая точка:',
                         alignment: 'right',
                         margin: [0, -5, 0, -2],
                     },
@@ -1412,7 +1385,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: 'Номинальная рабочая точка',
+                        text: 'Номинальная рабочая точка:',
                         alignment: 'right',
                         margin: [0, -5, 0, -2],
                     },
@@ -1926,7 +1899,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                     },
                     {
                         rowSpan: 2,
-                        text: 'Номинальная рабочая точка',
+                        text: 'Номинальная рабочая точка:',
                         alignment: 'right',
                         margin: [0, -5, 0, -2],
                     },
