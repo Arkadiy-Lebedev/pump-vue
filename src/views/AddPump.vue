@@ -171,7 +171,10 @@ const pump: IPump = reactive<IPump>({
   wheel_standart: '',
   wheel_order: '',
   pole: '',
-  execution: ''
+  execution: '',
+  step_x: null,
+  step_y: null,
+
 })
 
 // const IsWQAName = ref(false)
@@ -302,7 +305,8 @@ const options = reactive({
         text: 'H(m) (Y)',
       },
       min: 0,
-      max: 50
+      max: 50,
+    
     },
     x: {
       beginAtZero: true,
@@ -311,7 +315,8 @@ const options = reactive({
         text: 'Q(м³/h) (X)',
       },
       min: 0,
-      max: 50
+      max: 50,
+      
     },
   },
   plugins: {
@@ -396,7 +401,10 @@ const createChart = () => {
         text: 'H(m) (Y)',
       },
       min: pump.miny,
-      max: pump.maxy
+      max: pump.maxy,
+      ticks: {
+        stepSize: pump.step_y
+      }
     },
     x: {
       beginAtZero: true,
@@ -405,7 +413,10 @@ const createChart = () => {
         text: 'Q(м³/h) (X)',
       },
       min: pump.minx,
-      max: pump.maxx
+      max: pump.maxx,
+      ticks: {
+        stepSize: pump.step_x
+      }
     },
 
   }
@@ -548,24 +559,7 @@ const { bubbleChartProps } = useBubbleChart({
               <label class="input-group__label">Вес</label>
               <InputNumber v-model="pump.weight" aria-describedby="username-help" />
             </div>
-            <div class="input-group ">
-              <label class="input-group__label flex items-center gap-2 cursor-pointer">Допустимая погрешность <i class="pi pi-info-circle" v-tooltip="
-                {
-                value: 'Погрешность при подборе насоса по оси Q (м³/ч) и H, желательно ставить минимум 1 пункт',
-                  pt: {
-                  arrow: {
-                    style: {
-                      borderRightColor: 'var(--primary-color)'
-                    }
-                  },
-                  text: 'bg-primary font-medium text-xs'
-                }
-              }
-                "></i></label>
-              <InputNumber v-model="pump.error" placeholder="количество пунктов" :minFractionDigits="1"
-                inputId="withoutgrouping" />
-                
-            </div>
+            
   
   <div class="input-group">
                 <label class="input-group__label">Количество полюсов</label>
@@ -882,10 +876,32 @@ const { bubbleChartProps } = useBubbleChart({
                 :class="{ 'p-invalid': errorMessage }" />
             </div>
             <div class="input-group">
-              <label class="input-group__label">Шаг</label>
+              <label class="input-group__label">Шаг кривой</label>
               <InputNumber v-model="pump.step" :minFractionDigits="2" inputId="withoutgrouping" />
             </div>
           </div>
+ <div class="sm:flex gap-5  mt-5">
+  
+            <div class="input-group ">
+                <label class="input-group__label flex items-center gap-2 cursor-pointer">Допустимая погрешность <i class="pi pi-info-circle" v-tooltip="{
+                    value: 'Погрешность при подборе насоса по оси Q (м³/ч) и H, желательно ставить минимум 1 пункт',
+                    pt: {
+                      arrow: {
+                        style: {
+                          borderRightColor: 'var(--primary-color)'
+                        }
+                      },
+                      text: 'bg-primary font-medium text-xs'
+                    }
+                  }
+                  "></i></label>
+                <InputNumber v-model="pump.error" placeholder="количество пунктов" :minFractionDigits="1"
+                  inputId="withoutgrouping" />
+                
+              </div>
+  </div>
+
+          
           <div class="sm:flex gap-5  mt-5">
             <div class="input-group">
               <label class="input-group__label">Шкала Q (м³/ч) (X), минимум</label>
@@ -894,6 +910,10 @@ const { bubbleChartProps } = useBubbleChart({
             <div class="input-group">
               <label class="input-group__label">Шкала Q (м³/ч) (X), максимум</label>
               <InputNumber v-model="pump.maxx" inputId="withoutgrouping" />
+            </div>
+            <div class="input-group">
+              <label class="input-group__label">Шаг шкалы Q (м³/ч) (X)</label>
+              <InputNumber v-model="pump.step_x" inputId="withoutgrouping" />
             </div>
           </div>
           <div class="sm:flex gap-5  mt-5 mb-2">
@@ -905,7 +925,12 @@ const { bubbleChartProps } = useBubbleChart({
               <label class="input-group__label">Шкала H (м.в.ст.) (Y), максимум</label>
               <InputNumber v-model="pump.maxy" inputId="withoutgrouping" />
             </div>
+            <div class="input-group">
+              <label class="input-group__label">Шаг шкалы H (м.в.ст.) (Y)</label>
+              <InputNumber v-model="pump.step_y" inputId="withoutgrouping" />
+            </div>
           </div>
+          
 
 
 

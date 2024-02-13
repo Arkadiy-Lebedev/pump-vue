@@ -151,6 +151,8 @@ isErrors = true
         wheel_order: '',
       pole: '',
       execution: '',
+      step_x: null,
+      step_y: null,
       }
       
       
@@ -240,6 +242,9 @@ isErrors = true
       pumpElement.wheel_standart=  el. wheel_standart ?? ""
       pumpElement.wheel_order=  el. wheel_order ?? ""
       pumpElement.pole=  el.pole ?? null
-    pumpElement.execution = el.execution ?? ''
+  pumpElement.execution = el.execution ?? ''
+  pumpElement.step_x = el.step_x ?? 10
+  pumpElement.step_y = el.step_y ?? 10
+    
       return pumpElement
 }

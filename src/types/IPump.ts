@@ -91,4 +91,6 @@ export interface IPump {
     date_update?: string | null,
     pole: string,
     execution: string,
+    step_x: number | null,
+    step_y: number | null,
 }

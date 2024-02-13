@@ -275,7 +275,27 @@ const options = reactive({
           opacity: 0.1
         },
       }
-    }
+    },
+    legend: {
+      // @ts-ignore
+       onClick: function (even, legendItem, legend) {  
+       const index = legendItem.datasetIndex
+         const ci = legend.chart
+        if (legendItem.text != "Рабочая точка"){
+           if (ci.isDatasetVisible(index)) {
+          ci.hide(index)
+          legendItem.hidden = true
+        } else {
+          ci.show(index)
+          legendItem.hidden = false
+        }
+        } else {
+          return null
+        }
+        return null  
+       
+      }
+    },
   },
 
 })
@@ -338,6 +358,7 @@ const showChartData = (id: number) => {
 
     }
 
+    console.log(itemPump)
 
     const options2 = {
 
@@ -348,7 +369,11 @@ const showChartData = (id: number) => {
           text: 'H(m)',
         },
         min: +itemPump.value.miny.toString(),
-        max: +itemPump.value.maxy.toString()
+        max: +itemPump.value.maxy.toString(),
+        ticks: {
+          // @ts-ignore
+          stepSize: itemPump.value.step_y != "---" ? itemPump.value.step_y : '10'
+        }
       },
       x: {
         beginAtZero: true,
@@ -357,7 +382,11 @@ const showChartData = (id: number) => {
           text: 'Q(м³/h)',
         },
         min: +itemPump.value.minx.toString(),
-        max: +itemPump.value.maxx.toString()
+        max: +itemPump.value.maxx.toString(),
+        ticks: {
+          // @ts-ignore
+          stepSize: itemPump.value.step_x != "---" ? itemPump.value.step_x : '10'
+        }
       },
 
     }
