@@ -113,7 +113,7 @@ const submitForm = () => {
       </div>
       <div class="input-group">
         <label class="input-group__label">ИНН *</label>
-        <InputMask id="basic" v-model="contact.inn" mask="9999999999" placeholder="" />
+        <InputMask v-model="contact.inn" mask="9999999999" placeholder="" />
       </div>
       <div class="input-group">
         <label class="input-group__label">ФИО *</label>        
@@ -121,7 +121,7 @@ const submitForm = () => {
       </div>
       <div class="input-group">
         <label class="input-group__label">Контактный телефон *</label>
-        <InputMask id="basic" v-model="contact.phone" mask="+7-999-999-99-99" placeholder="+7-999-999-99-99" />
+        <InputMask  v-model="contact.phone" mask="+7-999-999-99-99" placeholder="+7-999-999-99-99" />
       </div>
       <div class="input-group">
         <label class="input-group__label">Электронная почта *</label>        
