@@ -306,7 +306,7 @@ const options = reactive({
       },
       min: 0,
       max: 50,
-    
+      
     },
     x: {
       beginAtZero: true,

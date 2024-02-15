@@ -61,7 +61,7 @@ const logOut = () => {
               </DisclosureButton>
             </div>
             <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-              <div class="flex flex-shrink-0 items-center">
+              <div class="flex flex-shrink-0 items-center cursor-pointer">
                 <img @click="router.push({ name: 'home' })" class="w-32 hidden sm:block" :src="Logo" alt="Your Company" />
               </div>
               <div class="hidden sm:ml-6 sm:block">

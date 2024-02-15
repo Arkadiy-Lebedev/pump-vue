@@ -4,6 +4,7 @@ import axios from 'axios'
 import { API } from "../api/api"
 import { useToastStore } from '../stores/toastStore'
 import type { IContact } from "../types/IContact"
+import { vMaska } from "maska"
 
 
 const useStore = useToastStore()
@@ -121,8 +122,8 @@ const submitForm = () => {
       </div>
       <div class="input-group">
         <label class="input-group__label">Контактный телефон *</label>
-        <InputMask  v-model="contact.phone" mask="+7-999-999-99-99" placeholder="+7-999-999-99-99" />
-      </div>
+        <input class="p-inputtext p-component" v-maska data-maska="+7-###-###-##-##" placeholder="+7-999-999-99-99" v-model="contact.phone">
+      </div>     
       <div class="input-group">
         <label class="input-group__label">Электронная почта *</label>        
         <Textarea v-model="contact.mail" autoResize rows="2" cols="30" />
