@@ -114,7 +114,8 @@ const submitForm = () => {
       </div>
       <div class="input-group">
         <label class="input-group__label">ИНН *</label>
-        <InputMask v-model="contact.inn" mask="9999999999" placeholder="" />
+        <!-- <InputMask v-model="contact.inn" mask="9999999999" placeholder="" /> -->
+        <input class="p-inputtext p-component" v-maska data-maska="############" v-model="contact.inn">
       </div>
       <div class="input-group">
         <label class="input-group__label">ФИО *</label>        
