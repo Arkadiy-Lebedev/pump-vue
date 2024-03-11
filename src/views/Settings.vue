@@ -159,3 +159,25 @@ const delUser = async (id: number) => {
 
   </div>
 </template>
+
+<style>
+
+.input-group {
+  @apply flex flex-col max-w-xs mb-5;
+}
+
+.wrapper-content .input-group {
+  @apply flex flex-col max-w-xs mb-0;
+}
+
+.input-group__label {
+  @apply mb-1 w-60;
+}
+
+.input-group__label-pump {
+  @apply mb-1 ;
+}
+
+
+
+</style>

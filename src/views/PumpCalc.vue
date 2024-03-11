@@ -669,7 +669,7 @@ const sendMessage = () => {
 </script>
 
 <template>
-  <div class=" relative h-screen flex flex-col">
+  <div class=" relative  flex flex-col h-dvh">
     <div class=" grow shrink-0">
       <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative 2xl:max-w-screen-2xl">
       <div class="wrapper-logo">
