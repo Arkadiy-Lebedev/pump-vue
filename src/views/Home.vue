@@ -68,9 +68,12 @@ for (let i = 0; i < newArray?.length; i++) {
           }
         }
       }
-
+// @ts-ignore 
+  const nr =  newArray.map((item, index) => {
+    return { ...item, rowNumber: index + 1 }
+  })
   
-  return newArray
+  return nr
 })
 
 
@@ -186,8 +189,6 @@ const onToggle = (val: IData[]) => {
 }
 
 
-
-
 </script>
 
 <template>
@@ -216,7 +217,9 @@ const onToggle = (val: IData[]) => {
                    headerTitle: { style: { textAlign: 'center', width: '100%' } }
                  }">
               <template #body="slotProps">
-                {{ slotProps.index + 1 }}
+                
+              {{ slotProps.data.rowNumber }}
+            
               </template>
             </Column>
                 <Column field="name" header="Название" style="width: 250px" :pt="{

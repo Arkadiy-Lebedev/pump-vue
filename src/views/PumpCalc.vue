@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { FilterMatchMode } from 'primevue/api'
 import axios from 'axios'
 import type { IPump } from "../types/IPump"
@@ -666,6 +666,20 @@ const sendMessage = () => {
 //   document.querySelector(".p-multiselect-filter-container").innerHTML="Все столбцы"
 // }
 
+const valueWithRowNumbers = computed(() => {
+  // @ts-ignore 
+  return pumpsEvent.value.map((item, index) => {
+    return { ...item, rowNumber: index + 1 }
+  })
+})
+
+const valueWithRowNumbersModal = computed(() => {
+  // @ts-ignore 
+  return pumpsEventModal.value.map((item, index) => {
+    return { ...item, rowNumber: index + 1 }
+  })
+})
+
 </script>
 
 <template>
@@ -729,7 +743,7 @@ const sendMessage = () => {
     <div v-if="pumpsEvent.length > 0" class="mx-auto max-w-full px-4 py-6 sm:px-4 lg:px-4 ">
       <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
               currentPageReportTemplate="{first} до {last}, из {totalRecords}"
-      v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="pumpsEvent" stripedRows tableStyle="min-width: 50rem">
+      v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand"  :loading="loading" :value="valueWithRowNumbers" stripedRows tableStyle="min-width: 50rem">
 
         <template #header>
           <div class="flex justify-content-end mb-3">
@@ -744,14 +758,17 @@ const sendMessage = () => {
               @update:modelValue="onToggle" display="chip" placeholder="Выберете столбец" />
           </div>
         </template>
-        <Column header="№" style="width: 20px" :pt="{
-          root: { style: { textAlign: 'center' } },
-          headerTitle: { style: { textAlign: 'center', width: '100%' } }
-        }">
-            <template #body="slotProps">
-              {{slotProps.index + 1}}
-            </template>
-          </Column>
+   <Column header="№" style="width: 20px" :pt="{
+     root: { style: { textAlign: 'center' } },
+     headerTitle: { style: { textAlign: 'center', width: '100%' } }
+   }">
+                <template #body="slotProps">
+                
+                {{ slotProps.data.rowNumber }}
+            
+                </template>
+              </Column>
+   
         <Column field="name" header="Название" style="width: 250px" :pt="{
           root: { style: { textAlign: 'center' } },
           headerTitle: { style: { textAlign: 'center', width: '100%' } }
@@ -918,7 +935,7 @@ const sendMessage = () => {
   }">
     <DataTable paginator :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]" paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
             currentPageReportTemplate="{first} до {last}, из {totalRecords}"
-     v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="pumpsEventModal" stripedRows tableStyle="min-width: 50rem">
+     v-model:filters="filters" :globalFilterFields="['name', 'type']" showGridlines resizableColumns columnResizeMode="expand" :loading="loading" :value="valueWithRowNumbersModal" stripedRows tableStyle="min-width: 50rem">
 
       <template #header>
          <div class="flex justify-content-end mb-3">
@@ -933,14 +950,17 @@ const sendMessage = () => {
             @update:modelValue="onToggle" display="chip" placeholder="Выберете столбец" />
         </div>
       </template>
-       <Column header="№" style="width: 20px" :pt="{
-         root: { style: { textAlign: 'center' } },
-         headerTitle: { style: { textAlign: 'center', width: '100%' } }
-       }">
-              <template #body="slotProps">
-                {{ slotProps.index + 1 }}
-              </template>
-            </Column>
+  <Column header="№" style="width: 20px" :pt="{
+    root: { style: { textAlign: 'center' } },
+    headerTitle: { style: { textAlign: 'center', width: '100%' } }
+  }">
+                <template #body="slotProps">
+                
+                {{ slotProps.data.rowNumber }}
+            
+                </template>
+              </Column>
+
       <Column field="name" header="Название" style="width: 350px" :pt="{
         root: { style: { textAlign: 'center' } },
         headerTitle: { style: { textAlign: 'center', width: '100%' } }
