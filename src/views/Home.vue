@@ -211,6 +211,14 @@ const onToggle = (val: IData[]) => {
                             display="chip" placeholder="Выберете столбец" />
                     </div>
                 </template>
+                 <Column header="№" style="width: 20px" :pt="{
+                   root: { style: { textAlign: 'center' } },
+                   headerTitle: { style: { textAlign: 'center', width: '100%' } }
+                 }">
+              <template #body="slotProps">
+                {{ slotProps.index + 1 }}
+              </template>
+            </Column>
                 <Column field="name" header="Название" style="width: 250px" :pt="{
                   root: { style: { textAlign: 'center' } },
                   headerTitle: { style: { textAlign: 'center', width: '100%' } }
