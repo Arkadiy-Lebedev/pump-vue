@@ -4,3 +4,8 @@ export interface IPumpSelect {
     pumpX: number | null,
     pumpY: number | null,
 }
+
+export interface IworkPointSelect {  
+    pumpX: number | null,
+    pumpY: number | null,
+}

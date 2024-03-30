@@ -3,7 +3,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { FilterMatchMode } from 'primevue/api'
 import axios from 'axios'
 import type { IPump } from "../types/IPump"
-import type { IPumpSelect } from "../types/IPumpSelect"
+import type { IPumpSelect, IworkPointSelect } from "../types/IPumpSelect"
 import { BubbleChart, useBubbleChart } from "vue-chart-3"
 import { Chart, registerables } from 'chart.js'
 import ChartAnnotation from 'chartjs-plugin-annotation'
@@ -55,6 +55,13 @@ const pumpSelect = reactive<IPumpSelect>({
   pumpY: null,
 })
 
+
+const workPointSelect = reactive<IworkPointSelect>({
+  pumpX: null,
+  pumpY: null,
+})
+
+
 const message = reactive({
   title: '',
   text: ''
@@ -73,7 +80,7 @@ const contactModal = ref<boolean>(false)
 const messageTextForSend = ref<string>('')
 const loadingPdf = ref<boolean>(false)
 const orderList = ref<string | null>(null)
-
+const isWorkPointBlock = ref<boolean>(false)
 
 const date = new Date().toLocaleDateString('ru-RU')
 
@@ -105,9 +112,39 @@ function formulaCreate(formula: string, x: string, name: string) {
 //   }
 // }
 
+
+
+const  resetCharts = () => {
+chartData.datasets[0].data = []
+  chartData.datasets[1].data = []
+  // @ts-ignore
+  options.plugins.annotation.annotations = {
+    line4: {
+      type: 'label',
+
+
+
+      width: widthChart?.width,
+      height: widthChart?.height,
+      content: getImage(),
+      font: {
+        size: 60,
+      },
+
+      opacity: 0.1
+    },
+  }
+}
+
+
+
 const newarray = ref<IPump[] | []>([])
 
 const findPump = () => {
+
+  resetCharts() 
+
+  isWorkPointBlock.value = false
 
   newarray.value = []
   if (!pumpSelect.pumpY || !pumpSelect.pumpX || pumpSelect.pumpY == 0 || pumpSelect.pumpX == 0) {
@@ -215,14 +252,8 @@ const loadTypes = async () => {
 
 
 onMounted(() => {
-  // Chart.register(ChartAnnotation, ...registerables)
 
   loadAllPump()
-
-
-  // options.plugins = { ...options.plugins, annotation: ChartAnnotation }
-
-
 
 })
 
@@ -315,6 +346,7 @@ const showChartDataInModal = (id: number) => {
  pumpSelect.pumpX = null
   showChartData(id)
   pumpsModal.value = false
+   isWorkPointBlock.value = true
 }
 
 
@@ -456,11 +488,9 @@ const showChartData = (id: number) => {
       chartData.datasets[1].data = []
         // @ts-ignore
       options.plugins.annotation.annotations = {
-        line4: {
+        // @ts-ignore
+        line1: {
           type: 'label',
-
-
-
           width: widthChart?.width,
           height: widthChart?.height,
           content: getImage(),
@@ -680,6 +710,66 @@ const valueWithRowNumbersModal = computed(() => {
   })
 })
 
+
+const addWorkPoint = () => {
+
+  chartData.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': workPointSelect.pumpY }]
+
+   options.plugins.annotation.annotations = {
+    // @ts-ignore
+    line1: {
+      type: 'line',
+      yMin: workPointSelect.pumpY,
+      yMax: workPointSelect.pumpY,
+      xMin: 0,
+      xMax: workPointSelect.pumpX,
+      borderColor: 'rgb(255, 99, 132)',
+      borderWidth: 2,
+      borderDash: [5, 5],
+    },
+    line2: {
+      type: 'line',
+      yMin: 0,
+      yMax: workPointSelect.pumpY,
+      xMin: workPointSelect.pumpX,
+      xMax: workPointSelect.pumpX,
+      borderColor: 'rgb(255, 99, 132)',
+      borderWidth: 2,
+      borderDash: [5, 5],
+    },
+    line3: {
+      type: 'label',
+      // @ts-ignore
+      xValue: workPointSelect.pumpX + 5,
+      // @ts-ignore
+      yValue: workPointSelect?.pumpY + 5,
+      borderColor: 'rgb(255, 99, 132)',
+      borderWidth: 1,
+      // borderDash: [5, 5],
+      backgroundColor: 'rgba(255,255,255)',
+      content: [`Q(м³/h) = ${workPointSelect.pumpX}, H(m) = ${workPointSelect.pumpY}`],
+      font: {
+        size: 12,
+      },
+    },
+    line4: {
+      type: 'label',
+      width: widthChart?.width,
+      height: widthChart?.height,
+      content: getImage(),
+      font: {
+        size: 60,
+      },
+
+      opacity: 0.1
+    },
+  }
+
+  pumpSelect.pumpX = workPointSelect.pumpX
+  pumpSelect.pumpY = workPointSelect.pumpY
+
+}
+
 </script>
 
 <template>
@@ -794,6 +884,34 @@ const valueWithRowNumbersModal = computed(() => {
         <div class="flex flex-col lg:flex-row justify-center items-center gap-5">
           <div id="chart" class="w-full sm:w-1/2 ">
             <BubbleChart class="chart-wrapper" ref="chartRef" v-bind="bubbleChartProps" />
+
+    <div>
+      <div v-if="isWorkPointBlock" >
+         <div class="flex justify-center items-center gap-5 mt-5">
+            <label>Расход (Q)
+            </label>
+            <InputGroup class=" w-48 sm:w-60">
+            <InputNumber v-model="workPointSelect.pumpX" :minFractionDigits="1" inputId="withoutgrouping" />
+      <InputGroupAddon class=" w-16">м³/ч</InputGroupAddon>
+            </InputGroup>
+        
+          </div>
+          <div class="flex justify-center items-center gap-5 mt-5">
+            <label>Напор (H)
+            </label>
+            <InputGroup class=" w-48 sm:w-60">
+            <InputNumber  v-model="workPointSelect.pumpY" :minFractionDigits="1" inputId="withoutgrouping" />
+      <InputGroupAddon class=" w-16">м.в.ст.</InputGroupAddon>
+        </InputGroup>
+          </div>
+   <div class="flex justify-center items-center gap-5 mt-5">
+          <Button class=" w-full sm:w-1/3" @click="addWorkPoint" label="НАНЕСТИ ТОЧКУ" />
+      </div>
+         
+        </div>
+        </div>
+
+
           </div>
           <div class=" w-full sm:w-1/2 ">
             <table class="table">
