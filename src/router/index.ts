@@ -32,6 +32,14 @@ const router = createRouter({
           }
         },
         {
+          path: '/add-pump/td',
+          name: 'add-pump-td',
+          component: () => import('@/views/AddPumpTd.vue'),
+          meta: {
+            needAuth: true
+          }
+        },
+        {
           path: '/edit-pump/:id',
           name: 'edit-pump',
           component: () => import('@/views/EditPump.vue'),
