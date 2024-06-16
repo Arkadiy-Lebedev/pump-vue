@@ -2,7 +2,7 @@
 import { ref, onMounted, reactive, computed } from 'vue'
 import { FilterMatchMode } from 'primevue/api'
 import axios from 'axios'
-import type { IPump } from "../types/IPump"
+import type { IPump, IPumpTd } from "../types/IPump"
 import type { IPumpSelect, IworkPointSelect } from "../types/IPumpSelect"
 import { BubbleChart, useBubbleChart } from "vue-chart-3"
 import { Chart, registerables } from 'chart.js'
@@ -14,6 +14,11 @@ import ContactForm from '../components/ContactForm.vue'
 import Footer from '../components/Footer.vue'
 import { useToastStore } from '../stores/toastStore'
 import { useWidthChart } from '../services/useWidthChart'
+
+interface ITypeCalc {
+  image: string,
+  type: string
+}
 
 const widthChart = useWidthChart()
 console.log(widthChart)
@@ -36,10 +41,7 @@ const pdfmake = usePDF({
   autoInstallVFS: true
 })
 
-interface ITypeCalc {
-  image: string,
-  type: string
-}
+
 
 const getImage = () => {
   const img = new Image()
@@ -84,12 +86,8 @@ const isWorkPointBlock = ref<boolean>(false)
 
 const date = new Date().toLocaleDateString('ru-RU')
 
-
-
 const closeModal = (status: string) => {
-
   contactModal.value = false
-
 }
 
 // преобразование  формулы
@@ -121,9 +119,6 @@ chartData.datasets[0].data = []
   options.plugins.annotation.annotations = {
     line4: {
       type: 'label',
-
-
-
       width: widthChart?.width,
       height: widthChart?.height,
       content: getImage(),
@@ -159,7 +154,15 @@ const findPump = () => {
   if (pumpSelect.type == 'Любой') {
     pumpsEvent.value = pumps.value
   } else {
-    pumpsEvent.value = pumps.value.filter(el => el.type == pumpSelect.type)
+    // pumpsEvent.value = pumps.value.filter(el => el.type == pumpSelect.type)
+    
+// проверка на совпадение в названиях типа массива
+    let arrayType = pumpSelect.type.split('/')
+    pumpsEvent.value = pumps.value.filter(el => {
+      let arrayTypeEl = el.type.toString().split('/')
+      return arrayType.every((e) => arrayTypeEl.includes(e))
+    })
+
   }
 
   if (pumpSelect.pumpX) {
@@ -206,6 +209,22 @@ const types = ref<ITypeCalc[]>([
   },
 ])
 
+const defoultRow = (array: any[]) => {
+     for (let i = 0; i < array?.length; i++) {
+    const obj = array[i]
+    for (let key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        // @ts-ignore
+        if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {
+          // @ts-ignore
+          obj[key] = "---"
+        }
+      }
+    }
+  }
+  return array
+}
+
 
 const loadAllPump = async () => {
   loading.value = true
@@ -214,22 +233,45 @@ const loadAllPump = async () => {
     .then((data) => {
       console.log(data.data)
 
-      for (let i = 0; i < data.data?.length; i++) {
-        const obj = data.data[i]
-        for (let key in obj) {
-          if (obj.hasOwnProperty(key)) {
-            // @ts-ignore
-               if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {    
-              // @ts-ignore
-              obj[key] = "---"
-            }
-          }
-        }
-      }
+      // for (let i = 0; i < data.data?.length; i++) {
+      //   const obj = data.data[i]
+      //   for (let key in obj) {
+      //     if (obj.hasOwnProperty(key)) {
+      //       // @ts-ignore
+      //          if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {    
+      //         // @ts-ignore
+      //         obj[key] = "---"
+      //       }
+      //     }
+      //   }
+      // }
 
-      pumps.value = data.data
+      defoultRow(data.data)
+
+      pumps.value.push(...data.data)
       loading.value = false
-      loadTypes()
+        
+    })
+    .catch((err) => {
+
+      loading.value = false
+      console.log(err)
+    })
+    .finally(() => {
+ loadTypes()  
+      loading.value = false
+    })
+
+
+
+     fetch(`${API}/api/pump-td/read.php`)
+    .then((response) => response.json())
+    .then((data) => {
+
+     defoultRow(data.data)
+
+      pumps.value.push(...data.data)
+      loading.value = false
     })
     .catch((err) => {
 
@@ -240,6 +282,28 @@ const loadAllPump = async () => {
 
       loading.value = false
     })
+
+  fetch(`${API}/api/pump-cdlf/read.php`)
+    .then((response) => response.json())
+    .then((data) => {
+
+    defoultRow(data.data)
+
+      pumps.value.push(...data.data)
+      loading.value = false
+    })
+    .catch((err) => {
+
+      loading.value = false
+      console.log(err)
+    })
+    .finally(() => {
+
+      loading.value = false
+    })
+
+
+
 }
 
 const loadTypes = async () => {
@@ -460,9 +524,9 @@ const showChartData = (id: number) => {
       line3: {
         type: 'label',
         // @ts-ignore
-        xValue: pumpSelect.pumpX + 5,
+        xValue: pumpSelect.pumpX + 15,
         // @ts-ignore
-        yValue: pumpSelect?.pumpY + 5,
+        yValue: pumpSelect?.pumpY + 15,
         borderColor: 'rgb(255, 99, 132)',
         borderWidth: 1,
         // borderDash: [5, 5],
@@ -665,7 +729,13 @@ const allPump = () => {
   if (pumpSelect.type == 'Любой') {
     pumpsEventModal.value = pumps.value
   } else {
-    pumpsEventModal.value = pumps.value.filter(el => el.type == pumpSelect.type)
+    let arrayType = pumpSelect.type.split('/')    
+    // pumpsEventModal.value = pumps.value.filter(el => el.type == pumpSelect.type)
+    pumpsEventModal.value = pumps.value.filter(el => {
+      let arrayTypeEl = el.type.toString().split('/')
+          return arrayType.every((e) => arrayTypeEl.includes(e))
+    })
+
   }
   pumpsModal.value = true
 }
@@ -704,10 +774,15 @@ const valueWithRowNumbers = computed(() => {
 })
 
 const valueWithRowNumbersModal = computed(() => {
-  // @ts-ignore 
-  return pumpsEventModal.value.map((item, index) => {
+
+  if (pumpsEventModal.value) {
+      return pumpsEventModal.value.map((item, index) => {
     return { ...item, rowNumber: index + 1 }
   })
+  } else {
+    return []
+  }
+
 })
 
 
@@ -740,9 +815,9 @@ const addWorkPoint = () => {
     line3: {
       type: 'label',
       // @ts-ignore
-      xValue: workPointSelect.pumpX + 5,
+      xValue: workPointSelect.pumpX + 15,
       // @ts-ignore
-      yValue: workPointSelect?.pumpY + 5,
+      yValue: workPointSelect?.pumpY + 15,
       borderColor: 'rgb(255, 99, 132)',
       borderWidth: 1,
       // borderDash: [5, 5],

@@ -4,20 +4,17 @@ import type { Ref } from 'vue'
 import { onMounted, ref } from "vue"
 import { useRouter } from 'vue-router'
 import { read, utils } from "xlsx"
-import { API } from "../api/api"
-import { itemPumpForExel } from "../services/itemPumpForExel"
-import { useToastStore } from '../stores/toastStore'
-import type { IType } from "../types/IType"
+import { API } from "@/api/api"
+import { itemPumpForExel } from "@/services/itemPumpForExelCdlf"
+import { useToastStore } from '@/stores/toastStore'
+import type { IType } from "@/types/IType"
 const useStore = useToastStore()
 
 const router = useRouter()
 
 interface IPumpsName {
-    id: number,
-    name: string,
-    phase:string,
-    efficiency:string,
-    voltage:string,
+  id: number,
+  name: string
 }
 
 
@@ -32,11 +29,9 @@ const types: Ref<IType[]> = ref([
 const fileInput = ref(null)
 const label = ref('Загрузить')
 const pumps = ref<IPumpsName[]>([
-  { id: 0,
-    name: '',
-    phase:'',
-    efficiency:'',
-    voltage:'',
+  {
+    id: 0,
+    name: ''
   }
 ])
 
@@ -51,8 +46,8 @@ onMounted(() => {
 
 
 const loadPumpNames = async () => {
-  axios.get(`${API}api/pump/read_name.php`)
-    .then((data) => {   
+  axios.get(`${API}api/pump-cdlf/read_name.php`)
+    .then((data) => {
       pumps.value = data.data.data
     })
 }
@@ -65,14 +60,14 @@ let errorsArray = ref<any[]>([])
 // @ts-ignore
 const loadFile = (evt) => {
   console.log(evt)
-label.value = evt.target.files[0].name
+  label.value = evt.target.files[0].name
   pumpsData = []
   errorsArray.value = []
 
   var selectedFile = evt.target.files[0]
   var reader = new FileReader()
   reader.onload = function (event) {
-     // @ts-ignore
+    // @ts-ignore
     var data = event.target.result
     var workbook = read(data, {
       type: 'binary'
@@ -81,9 +76,9 @@ label.value = evt.target.files[0].name
     workbook.SheetNames.forEach(function (sheetName) {
 
       console.log(456456)
- // @ts-ignore
+      // @ts-ignore
       var XL_row_object = utils.sheet_to_row_object_array(workbook.Sheets[sheetName])
-      XL_row_object.splice(0, 2)
+      XL_row_object.splice(0, 1)
       console.log(XL_row_object)
 
 
@@ -94,26 +89,27 @@ label.value = evt.target.files[0].name
         // @ts-ignore
         let resp: any = itemPumpForExel(el, types, i)
 
-        console.log(resp)
+        // console.log(resp)
 
         if (resp?.status) {
-           // @ts-ignore
+          // @ts-ignore
           errorsArray.value.push(resp)
 
         } else {
           pumpsData.push(resp)
         }
 
-console.log(errorsArray.value)
+        console.log(errorsArray.value)
       })
 
       if (errorsArray.value.length) {
         // @ts-ignore
         fileInput.value.value = ''
-        
+
         return
       } else {
-         // @ts-ignore
+        // @ts-ignore
+        console.log('данные',pumpsData)
         example(pumpsData)
       }
 
@@ -121,26 +117,26 @@ console.log(errorsArray.value)
     })
 
   }
-  reader.readAsBinaryString(selectedFile)      
- 
+  reader.readAsBinaryString(selectedFile)
+
 }
 // @ts-ignore
 const example = async (data) => {
-   // @ts-ignore
+  // @ts-ignore
   await Promise.all(data.map(item => {
 
-   let pump = pumps.value.find(el => {   
-    if(el.name == item.name && el.phase == item.phase && el.efficiency == item.efficiency && el.voltage == item.voltage){
+    let pump = pumps.value.find(el => {
+      if (el.name == item.name) {
         return el
-    } else{
-      return false
+      } else {
+        return false
+      }
+    })
+
+
+    if (pump) {
+      item.id = pump.id
     }
-  })
-
-
-   if(pump){
-    item.id = pump.id
-   }
 
     let formData = new FormData()
     for (let key in item) {
@@ -154,16 +150,20 @@ const example = async (data) => {
       }
     }
 
-      if( item.id>0 ){
-        return axios.post(`${API}api/pump/update.php`, formData)
-      } else {
-        return axios.post(`${API}api/pump/create.php`, formData)
-      }
+    if (item.id > 0) {
+      return axios.post(`${API}api/pump-cdlf/update.php`, formData)
+    } else {
+      return axios.post(`${API}api/pump-cdlf/create.php`, formData)
+    }
 
-   }))
+  }))
+  .finally(() => {
 
-  useStore.showToast({ type: 'success', title: 'Успешно!', text: `Добавлено ${pumpsData.length} шт.` })
-     router.push({ name: 'home' })
+    console.log(123221313)
+      useStore.showToast({ type: 'success', title: 'Успешно!', text: `Добавлено ${pumpsData.length} шт.` })
+      router.push({ name: 'home' })
+    })
+
 }
 
 </script>
@@ -177,21 +177,17 @@ const example = async (data) => {
         <div class="download__wrapper mb-2">
 
           <div class="" id="download-file">
-  <div>
-              <p class="mb-3 ">Загрузите файл Excel для насосов серии WQA:</p>
+            <div>
+              <p class="mb-3 ">Загрузите файл Excel для насосов серии CDLF:</p>
               <label for="file" class=" cursor-pointer"><i class="pi pi-upload form__icons"></i> {{ label }}</label>
               <input hidden class="select" ref="fileInput" id="file" type="file" accept=".xls, .xlsx"
                 @change="loadFile" />
             </div>
-
-            <!-- <span class="">Загрузите файл Excel: </span>
-            <input ref="fileInput" @change="loadFile" type="file" id="fileUploader" name="fileUploader"
-              accept=".xls, .xlsx" /> -->
           </div>
         </div>
 
         <div class="mb-3 mt-5" v-for="(elem, ind) of errorsArray" :key=ind>
-          <InlineMessage severity="error">Строка {{ elem.index + 4 }},
+          <InlineMessage severity="error">Строка {{ elem.index + 3 }},
             насос: {{ elem.pump.name }}. <div>Ошибка: {{ elem?.message.join(", ") }}</div>
           </InlineMessage>
         </div>

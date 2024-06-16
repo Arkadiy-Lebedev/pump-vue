@@ -22,6 +22,7 @@ import Panel from 'primevue/panel'
 import Toast from 'primevue/toast';
 import Fieldset from 'primevue/fieldset';
 import Card from 'primevue/card';
+import Divider from 'primevue/divider';
 
 import Textarea from 'primevue/textarea';
 import Accordion from 'primevue/accordion'
@@ -81,5 +82,6 @@ app.component('MultiSelect', MultiSelect)
 app.component('InputGroup', InputGroup)
 app.component('InputGroupAddon', InputGroupAddon)
 app.component('InputMask', InputMask)
+app.component('Divider', Divider)
 
 app.mount('#app')

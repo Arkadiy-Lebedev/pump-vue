@@ -7,6 +7,14 @@
     {
       "path": "./tsconfig.app.json"
     }
-  ]
+  ],
+   "compilerOptions": {
+    "paths": { 
+      "@/*": [
+        "../*"
+      ],
+    },
+    "noEmit": true,
+  }
 }
 

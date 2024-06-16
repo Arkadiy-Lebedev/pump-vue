@@ -25,6 +25,14 @@ const router = createRouter({
         },
         {
           path: '/add-pump',
+          name: 'add-pump-list',
+          component: () => import('@/views/AddPumpList.vue'),
+          meta: {
+            needAuth: true
+          }
+        },
+        {
+          path: '/add-pump/wqa',
           name: 'add-pump',
           component: () => import('@/views/AddPump.vue'),
           meta: {
@@ -34,15 +42,39 @@ const router = createRouter({
         {
           path: '/add-pump/td',
           name: 'add-pump-td',
-          component: () => import('@/views/AddPumpTd.vue'),
+          component: () => import('@/views/Td/AddPumpTd.vue'),
           meta: {
             needAuth: true
           }
         },
         {
-          path: '/edit-pump/:id',
+          path: '/add-pump/cdlf',
+          name: 'add-pump-cdlf',
+          component: () => import('@/views/Cdlf/AddPumpCdlf.vue'),
+          meta: {
+            needAuth: true
+          }
+        },
+        {
+          path: '/edit-pump/wqa/:id',
           name: 'edit-pump',
           component: () => import('@/views/EditPump.vue'),
+          meta: {
+            needAuth: true
+          }
+        },
+        {
+          path: '/edit-pump/td/:id',
+          name: 'edit-pump-td',
+          component: () => import('@/views/Td/EditPumpTd.vue'),
+          meta: {
+            needAuth: true
+          }
+        },
+        {
+          path: '/edit-pump/cdlf/:id',
+          name: 'edit-pump-cdlf',
+          component: () => import('@/views/Cdlf/EditPumpCdlf.vue'),
           meta: {
             needAuth: true
           }
@@ -67,6 +99,22 @@ const router = createRouter({
           path: '/add-pamps-data',
           name: 'add-type-data',
            component: AddPumpsExel,
+          meta: {
+            needAuth: true
+          }
+        },
+         {
+          path: '/add-td-exel',
+          name: 'add-td-exel',
+           component: () => import('@/views/Td/AddPumpsExelTd.vue'),
+          meta: {
+            needAuth: true
+          }
+        },
+         {
+          path: '/add-cdlf-exel',
+          name: 'add-cdlf-exel',
+           component: () => import('@/views/Cdlf/AddPumpsExelCdlf.vue'),
           meta: {
             needAuth: true
           }

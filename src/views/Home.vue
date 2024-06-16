@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import SubHeader from "../components/SubHeader.vue"
-import type { IPump } from "../types/IPump"
+import type { IPump, IPumpTd } from "../types/IPump"
 import Item from "../components/Item.vue"
 import { API } from "../api/api"
 import axios from 'axios'
@@ -30,6 +30,7 @@ const filters = ref({
 
 
 const loadAllPump = async () => {
+  pumps.value = []
   loading.value = true
   fetch(`${API}/api/pump/read.php`)
     .then((response) => response.json())
@@ -38,7 +39,7 @@ const loadAllPump = async () => {
       // if (!data.data) {
       //   return
       // }
-        pumps.value = data.data
+        pumps.value.push(...data.data)
         loading.value = false
     })
     .catch((err) => {
@@ -50,9 +51,52 @@ const loadAllPump = async () => {
       
        loading.value = false
     })
+
+  fetch(`${API}/api/pump-td/read.php`)
+    .then((response) => response.json())
+    .then((data) => {
+
+      // if (!data.data) {
+      //   return
+      // }
+     
+      pumps.value.push(...data.data)
+      loading.value = false
+    })
+    .catch((err) => {
+
+      loading.value = false
+      console.log(err)
+    })
+    .finally(() => {
+
+      loading.value = false
+    })
+
+    fetch(`${API}/api/pump-cdlf/read.php`)
+    .then((response) => response.json())
+    .then((data) => {
+
+      // if (!data.data) {
+      //   return
+      // }
+
+      pumps.value.push(...data.data)
+      loading.value = false
+    })
+    .catch((err) => {
+
+      loading.value = false
+      console.log(err)
+    })
+    .finally(() => {
+
+      loading.value = false
+    })
+
 }
 
-const pampForTable = computed((): IPump[] => {
+const pampForTable = computed(()=> {
   const newArray = pumps.value
   
 
@@ -77,10 +121,23 @@ for (let i = 0; i < newArray?.length; i++) {
 })
 
 
+const linkForPamps = (name: string) => {
+  if (name.indexOf("WQA") !== -1) {
+    return 'pump'
+  }
+  if (name.indexOf("TD") !== -1) {
+    return 'pump-td'
+  }
+  if (name.indexOf("CDLF") !== -1) {
+    return 'pump-cdlf'
+  }
+  return null
+}
 
-
-const delPump = async (id: number) => {
-  axios.post(`${API}api/pump/delete.php`, { id: id })
+const delPump = async (id: number, name: string) => {
+const link = linkForPamps(name)
+  if (link) {
+    axios.post(`${API}api/${link}/delete.php`, { id: id })
     .then(resp => {
       if (resp.status == 200) {
         loadAllPump()
@@ -88,10 +145,16 @@ const delPump = async (id: number) => {
       }
       console.log(resp)
     })
+  } else {
+    useStore.showToast({ type: 'warn', title: 'Ошибка!', text: `Не верный тип насоса...` })
+  }
+  
 }
 
-const copyPump = async (id: number) => {
-  axios.post(`${API}api/pump/copy.php`, { id: id })
+const copyPump = async (id: number, name: string) => {
+  const link = linkForPamps(name)
+  if (link) {
+     axios.post(`${API}api/${link}/copy.php`, { id: id })
     .then(resp => {
       if (resp.status == 200) {
         loadAllPump()
@@ -100,11 +163,15 @@ const copyPump = async (id: number) => {
       }
       console.log(resp)
     })
+  } else {
+    useStore.showToast({ type: 'warn', title: 'Ошибка!', text: `Не верный тип насоса...` })
+  }
+ 
 }
 
 const confirm = useConfirm()
 
-const confirm1 = (event: any, id: number) => {
+const confirm1 = (event: any, id: number, name:string) => {
   confirm.require({
     target: event.currentTarget,
     message: 'Удалить насос?',
@@ -112,7 +179,7 @@ const confirm1 = (event: any, id: number) => {
     acceptClass: 'p-button-danger p-button-sm',
     accept: () => {
 
-      delPump(id)
+      delPump(id, name)
     },
     reject: () => {
 
@@ -189,6 +256,33 @@ const onToggle = (val: IData[]) => {
 }
 
 
+const seriesPump = (name: string) => {
+ 
+  if (name.indexOf("WQA") !== -1) {
+   
+        return 'edit-pump'
+  } 
+    if (name.indexOf("TD") !== -1) {
+        return 'edit-pump-td'
+  }   
+      if (name.indexOf("CDLF") !== -1) {
+    return 'edit-pump-cdlf'
+  }
+  return null
+}
+
+const goToPumps = (names: string, id: number | undefined) => {
+  const link = seriesPump(names)
+  if (link) {
+   router.push({ name: link, params: { id: id ? id : 0 } })
+}
+  else {
+     useStore.showToast({ type: 'warn', title: 'Ошибка!', text: `Не верный тип насоса...` })
+
+ }
+ 
+}
+
 </script>
 
 <template>
@@ -231,9 +325,10 @@ const onToggle = (val: IData[]) => {
               data.name }}
             </p>
             <div class="flex justify-between gap-4 mt-2">
-              <i class="pi pi-pencil del-trash hover:text-red-400 cursor-pointer text-xs" @click="router.push({ name: 'edit-pump', params: { id: data.id ? data.id : 0 } })"></i>
-              <i class="pi pi-copy del-trash hover:text-red-400 cursor-pointer text-xs" @click="copyPump(data.id ? data.id : 0)"></i>
-              <i class="pi pi-trash del-trash hover:text-red-400 cursor-pointer text-xs" @click="confirm1($event, data.id ? data.id : 0)"></i>
+             
+              <i class="pi pi-pencil del-trash hover:text-red-400 cursor-pointer text-xs" @click="goToPumps(data.name, data.id)"></i>
+              <i class="pi pi-copy del-trash hover:text-red-400 cursor-pointer text-xs" @click="copyPump(data.id ? data.id : 0, data.name)"></i>
+              <i class="pi pi-trash del-trash hover:text-red-400 cursor-pointer text-xs" @click="confirm1($event, data.id ? data.id : 0, data.name)"></i>
             
               <ConfirmPopup></ConfirmPopup>
             </div>
@@ -327,11 +422,11 @@ const onToggle = (val: IData[]) => {
     <Item title="Погрешность" :content="itemPump?.error ? String(itemPump?.error) : ''" />
 
     <div class="mt-6">
-      <Button @click="router.push({ name: 'edit-pump', params: { id: itemPump?.id ? itemPump?.id : 0 } })"
+      <Button @click="goToPumps(itemPump?.name ? itemPump?.name : '', itemPump?.id ? itemPump?.id : 0)"
         icon="pi pi-pencil" label="Редактировать" size="small" />
     </div>
     <div class="mt-3">
-      <Button @click="confirm1($event, itemPump?.id ? itemPump?.id : 0)" icon="pi pi-times" label="Удалить"
+      <Button @click="confirm1($event, itemPump?.id ? itemPump?.id : 0, itemPump?.name ? itemPump?.name : '')" icon="pi pi-times" label="Удалить"
         severity="danger" size="small"></Button>
       <ConfirmPopup></ConfirmPopup>
     </div>

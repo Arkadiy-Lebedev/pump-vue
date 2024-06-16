@@ -43,10 +43,19 @@ export const itemPumpForExel = (el: any, types: IType, i: number) => {
   }
 
   if (el.formuls) {
+    console.log(el.formuls)
+
+    let x = 50
+    let y = eval(el.formuls)
+    console.log(y)
     try {
-      let x = 1
-      let y = eval(el.formuls.replace(/x/g, x))
-      
+  
+      let y = eval(el.formuls)
+      console.log(y)
+      if (y == false) {
+        errorsMessage.push('Неверная формула')
+        isErrors = true
+      }
     }
     catch (err) {
 isErrors = true

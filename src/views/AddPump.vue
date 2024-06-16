@@ -448,10 +448,13 @@ const { bubbleChartProps } = useBubbleChart({
 </script>
 
 <template>
-  <SubHeader title="Новый насос" />
-  <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-    <Button @click="router.push({ name: 'add-type' })" icon="pi pi-book" label="Типы насосов" severity="secondary" />
+  <SubHeader title="Новый насос WQA" />
+  <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 ">
+    <div class="flex gap-5">  
+
     <Button class=" ms-5" @click="router.push({ name: 'add-type-data' })" icon="pi pi-database" label="Из файла" severity="secondary" />
+    </div>
+    
     <div class="wrapper mt-5">
       <Card>
           <template #content>

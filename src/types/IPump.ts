@@ -141,5 +141,48 @@ export interface IPumpTd {
     step: number,
     step_x: number | null,
     step_y: number | null,
-   
+   date_update?: string | null,
+}
+
+
+export interface IPumpCdlf {
+    id: number,
+    coordinates?: {
+        x: number,
+        y: number
+    }[],
+    name: string,
+    type: string | number,
+    b1: number | null,
+    b2: number | null,
+    b12: number | null,
+    d1: number | null,
+    d2: number | null,
+    weight: number | null,
+    power: number | null,    
+    engineMount: string,
+    diffuser: string,
+    innerBody: string,
+    housingSupport: string,  
+    coupling: string, 
+    wheel: string, 
+    outerCasing: string, 
+    shaft: string, 
+    pipe: string, 
+    lid: string, 
+    base: string,
+    note: string,
+    error: number | null,
+    minx: number,
+    maxx: number,
+    miny: number,
+    maxy: number,
+    formuls: string,
+    start: number | null,
+    finish: number | null,
+    step: number,
+    step_x: number | null,
+    step_y: number | null,
+    date_update?: string | null,
+    
 }
