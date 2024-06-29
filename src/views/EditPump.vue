@@ -448,6 +448,8 @@ const createChart = () => {
   chartData.datasets = chartData2
   options.scales = options2
 
+
+
 }
 
 const { bubbleChartProps } = useBubbleChart({
@@ -929,6 +931,12 @@ const { bubbleChartProps } = useBubbleChart({
         <div class="w-full  mt-4 ">
           <BubbleChart class="chart-wrapper"      v-bind="bubbleChartProps" />
         </div>
+
+  <!-- <div class="w-full  mt-4 ">
+
+            <BubbleChart class="chart-wrapper"      :chartData="chartData" :options="options" />
+          </div> -->
+
       </Fieldset>
 
     <div class="mt-5 mb-10 flex flex-col gap-4">

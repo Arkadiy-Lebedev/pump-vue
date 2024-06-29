@@ -14,6 +14,9 @@ import ContactForm from '../components/ContactForm.vue'
 import Footer from '../components/Footer.vue'
 import { useToastStore } from '../stores/toastStore'
 import { useWidthChart } from '../services/useWidthChart'
+import { useFetchAllPumps } from '../hooks/useFetch'
+import { useDefaultRow } from '../hooks/useDefaultRow'
+
 
 interface ITypeCalc {
   image: string,
@@ -209,100 +212,15 @@ const types = ref<ITypeCalc[]>([
   },
 ])
 
-const defoultRow = (array: any[]) => {
-     for (let i = 0; i < array?.length; i++) {
-    const obj = array[i]
-    for (let key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        // @ts-ignore
-        if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {
-          // @ts-ignore
-          obj[key] = "---"
-        }
-      }
-    }
-  }
-  return array
-}
 
 
 const loadAllPump = async () => {
   loading.value = true
-  fetch(`${API}/api/pump/read.php`)
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data.data)
 
-      // for (let i = 0; i < data.data?.length; i++) {
-      //   const obj = data.data[i]
-      //   for (let key in obj) {
-      //     if (obj.hasOwnProperty(key)) {
-      //       // @ts-ignore
-      //          if (obj[key] == "" || obj[key] == null || obj[key] == "null" || obj[key] == " ") {    
-      //         // @ts-ignore
-      //         obj[key] = "---"
-      //       }
-      //     }
-      //   }
-      // }
-
-      defoultRow(data.data)
-
-      pumps.value.push(...data.data)
-      loading.value = false
-        
-    })
-    .catch((err) => {
-
-      loading.value = false
-      console.log(err)
-    })
-    .finally(() => {
- loadTypes()  
-      loading.value = false
-    })
-
-
-
-     fetch(`${API}/api/pump-td/read.php`)
-    .then((response) => response.json())
-    .then((data) => {
-
-     defoultRow(data.data)
-
-      pumps.value.push(...data.data)
-      loading.value = false
-    })
-    .catch((err) => {
-
-      loading.value = false
-      console.log(err)
-    })
-    .finally(() => {
-
-      loading.value = false
-    })
-
-  fetch(`${API}/api/pump-cdlf/read.php`)
-    .then((response) => response.json())
-    .then((data) => {
-
-    defoultRow(data.data)
-
-      pumps.value.push(...data.data)
-      loading.value = false
-    })
-    .catch((err) => {
-
-      loading.value = false
-      console.log(err)
-    })
-    .finally(() => {
-
-      loading.value = false
-    })
-
-
+  const { data, pending } = await useFetchAllPumps()
+  useDefaultRow(data.value)
+  pumps.value = data.value 
+  loading.value = pending.value
 
 }
 
@@ -848,7 +766,9 @@ const addWorkPoint = () => {
 </script>
 
 <template>
+
   <div class=" relative  flex flex-col h-dvh">
+
     <div class=" grow shrink-0">
       <div class="mx-auto max-w-7xl px-4 py-11 sm:px-6 lg:px-8 relative 2xl:max-w-screen-2xl">
       <div class="wrapper-logo">
