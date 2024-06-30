@@ -48,7 +48,10 @@ onMounted(() => {
 const loadPumpNames = async () => {
   axios.get(`${API}api/pump-td/read_name.php`)
     .then((data) => {
-      pumps.value = data.data.data
+      if (data.data.data) {
+        pumps.value = data.data.data
+      }
+      
     })
 }
 loadPumpNames()

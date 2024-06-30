@@ -89,7 +89,7 @@ export interface IPump {
     wheel_standart: string,
     wheel_order: string,
     date_update?: string | null,
-    pole: string,
+    pole:  string| number | null,
     execution: string,
     step_x: number | null,
     step_y: number | null,
@@ -116,7 +116,7 @@ export interface IPumpTd {
     coupling: string,
     seal_order: string,
     seal:string,
-    d: string,
+    d: number | null,
     b1: number | null,
     b2: number | null,
     b3: number | null,
@@ -141,7 +141,35 @@ export interface IPumpTd {
     step: number,
     step_x: number | null,
     step_y: number | null,
-   date_update?: string | null,
+    date_update?: string | null,
+    
+    rpm: number | null,
+    pole: string| number | null,
+    dn: number | null,
+    phase: number | null,
+    voltage: number | null,
+
+    minx_kw: number,
+    maxx_kw: number,
+    miny_kw: number,
+    maxy_kw: number,
+    formuls_kw: string,
+    start_kw: number | null,
+    finish_kw: number | null,
+    step_kw: number,
+    step_x_kw: number | null,
+    step_y_kw: number | null,
+
+    minx_npsh: number,
+    maxx_npsh: number,
+    miny_npsh: number,
+    maxy_npsh: number,
+    formuls_npsh: string,
+    start_npsh: number | null,
+    finish_npsh: number | null,
+    step_npsh: number,
+    step_x_npsh: number | null,
+    step_y_npsh: number | null,
 }
 
 
@@ -185,4 +213,9 @@ export interface IPumpCdlf {
     step_y: number | null,
     date_update?: string | null,
     
+}
+
+
+export interface IPumpsAll extends IPump, IPumpTd, IPumpCdlf {
+
 }

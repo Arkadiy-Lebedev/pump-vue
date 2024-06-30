@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import axios from 'axios'
-import { watch, onMounted, reactive, ref } from "vue"
-import type { Ref } from 'vue'
 import SubHeader from "@/components/SubHeader.vue"
+import axios from 'axios'
 import InputGroup from 'primevue/inputgroup'
+import type { Ref } from 'vue'
+import { onMounted, reactive, ref } from "vue"
 
-import OrderList from "primevue/orderlist"
-import { BubbleChart, useBubbleChart } from "vue-chart-3"
-import { useRouter } from 'vue-router'
 import { API } from "@/api/api"
 import type { IPumpTd } from "@/types/IPump"
 import type { IType } from "@/types/IType"
+import { BubbleChart, useBubbleChart } from "vue-chart-3"
+import { useRouter } from 'vue-router'
 
 import { useToastStore } from '@/stores/toastStore'
 const useStore = useToastStore()
@@ -101,7 +100,7 @@ const pump: IPumpTd = reactive<IPumpTd>({
   coupling: '',
   seal_order: '',
   seal: '',
-  d: '',
+  d: null,
   b1: null,
   b2: null,
   b3: null,
@@ -125,7 +124,35 @@ const pump: IPumpTd = reactive<IPumpTd>({
   step_y: null,
   weight: null,
   power: null,
-  note: ''
+  note: '',
+  rpm: null,
+  pole: null,
+  dn: null,
+  phase: null,
+  voltage: null,
+  minx_kw: 0,
+  maxx_kw: 50,
+  miny_kw: 0,
+  maxy_kw: 50,
+  formuls_kw: '',
+  start_kw: null,
+  finish_kw: null,
+  step_kw: 0.2,
+  step_x_kw: null,
+  step_y_kw: null,
+  minx_npsh: 0,
+  maxx_npsh: 50,
+  miny_npsh: 0,
+  maxy_npsh: 50,
+  formuls_npsh: '',
+  start_npsh: null,
+  finish_npsh: null,
+  step_npsh: 0.2,
+  step_x_npsh: null,
+  step_y_npsh: null,
+
+
+
 })
 
 
@@ -178,10 +205,122 @@ const chartData = reactive({
       type: "bubble",
       data: pump.coordinates,
       cubicInterpolationMode: "monotone",
-      label: "Кривая работы насоса",
+      label: "Кривая работы насоса KW",
       fill: false,
       borderColor: 'rgb(75, 192, 192)',
       pointBackgroundColor: 'rgb(75, 192, 192)',
+      pointRadius: 2,
+      spanGaps: true,
+    }
+  ],
+})
+
+
+
+
+
+const optionsKw = reactive({
+  aspectRatio: 1,
+  scales: {
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'H(m) (Y)',
+      },
+      min: 0,
+      max: 50,
+
+    },
+    x: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Q(м³/h) (X)',
+      },
+      min: 0,
+      max: 50,
+
+    },
+  },
+  plugins: {
+    tooltip: {
+      caretPadding: 10,
+      callbacks: {
+        label: function (context: any) {
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          return label
+        }
+      }
+    }
+  }
+})
+
+const chartDataKw = reactive({
+
+  datasets: [
+    {
+      type: "bubble",
+      data: pump.coordinates,
+      cubicInterpolationMode: "monotone",
+      label: "Кривая работы насоса KW",
+      fill: false,
+      borderColor: 'rgb(245, 129, 66)',
+      pointBackgroundColor: 'rgb(245, 129, 66)',
+      pointRadius: 2,
+      spanGaps: true,
+    }
+  ],
+})
+
+const optionsNpsh = reactive({
+  aspectRatio: 1,
+  scales: {
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'H(m) (Y)',
+      },
+      min: 0,
+      max: 50,
+
+    },
+    x: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Q(м³/h) (X)',
+      },
+      min: 0,
+      max: 50,
+
+    },
+  },
+  plugins: {
+    tooltip: {
+      caretPadding: 10,
+      callbacks: {
+        label: function (context: any) {
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          return label
+        }
+      }
+    }
+  }
+})
+
+const chartDataNpsh = reactive({
+
+  datasets: [
+    {
+      type: "bubble",
+      data: pump.coordinates,
+      cubicInterpolationMode: "monotone",
+      label: "Кривая работы насоса NPSH",
+      fill: false,
+      borderColor: 'rgb(11, 41, 230)',
+      pointBackgroundColor: 'rgb(11, 41, 230)',
       pointRadius: 2,
       spanGaps: true,
     }
@@ -284,6 +423,164 @@ const { bubbleChartProps } = useBubbleChart({
 })
 
 
+const createChartKw = () => {
+  coordinates.value = []
+
+  if (pump.start_kw && pump.finish_kw) {
+    for (let i = +pump.start_kw; i < +pump.finish_kw; i = i + +pump.step_kw) {
+
+      try {
+        let y = eval(pump.formuls_kw.replace(/x/g, i.toString()))
+        console.log(y)
+        coordinates.value.push({
+          x: +i.toFixed(2),
+          y: +y.toFixed(2),
+        })
+
+      } catch (err) {
+
+        console.log(err)
+        isFormulaSucces.value = false
+        useStore.showToast({ type: 'error', title: 'Ошибка!', text: `Проверьте правильность формулы` })
+        return
+
+      }
+      isFormulaSucces.value = true
+
+    }
+    if (coordinates.value[coordinates.value.length - 1] != pump.finish_kw) {
+      let y = eval(pump.formuls_kw.replace(/x/g, pump.finish_kw.toString()))
+      coordinates.value.push({
+        x: +pump.finish_kw,
+        y: +y.toFixed(2),
+      })
+    }
+
+
+
+  }
+  console.log(coordinates.value)
+
+  const options2 = {
+
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'H(m) (Y)',
+      },
+      min: pump.miny_kw,
+      max: pump.maxy_kw,
+      ticks: {
+        stepSize: pump.step_y_kw
+      }
+    },
+    x: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Q(м³/h) (X)',
+      },
+      min: pump.minx_kw,
+      max: pump.maxx_kw,
+      ticks: {
+        stepSize: pump.step_x_kw
+      }
+    },
+
+  }
+
+
+
+
+  const chartData2 = coordinates.value
+
+
+  chartDataKw.datasets[0].data = chartData2
+  optionsKw.scales = options2
+
+  // options.plugins = plugins
+}
+
+const createChartNpsh = () => {
+  coordinates.value = []
+
+  if (pump.start_npsh && pump.finish_npsh) {
+    for (let i = +pump.start_npsh; i < +pump.finish_npsh; i = i + +pump.step_npsh) {
+
+      try {
+        let y = eval(pump.formuls_npsh.replace(/x/g, i.toString()))
+        console.log(y)
+        coordinates.value.push({
+          x: +i.toFixed(2),
+          y: +y.toFixed(2),
+        })
+
+      } catch (err) {
+
+        console.log(err)
+        isFormulaSucces.value = false
+        useStore.showToast({ type: 'error', title: 'Ошибка!', text: `Проверьте правильность формулы` })
+        return
+
+      }
+      isFormulaSucces.value = true
+
+    }
+    if (coordinates.value[coordinates.value.length - 1] != pump.finish_npsh) {
+      let y = eval(pump.formuls_npsh.replace(/x/g, pump.finish_npsh.toString()))
+      coordinates.value.push({
+        x: +pump.finish_npsh,
+        y: +y.toFixed(2),
+      })
+    }
+
+
+
+  }
+  console.log(coordinates.value)
+
+  const options2 = {
+
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'H(m) (Y)',
+      },
+      min: pump.miny_npsh,
+      max: pump.maxy_npsh,
+      ticks: {
+        stepSize: pump.step_y_npsh
+      }
+    },
+    x: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Q(м³/h) (X)',
+      },
+      min: pump.minx_npsh,
+      max: pump.maxx_npsh,
+      ticks: {
+        stepSize: pump.step_x_npsh
+      }
+    },
+
+  }
+
+
+
+
+  const chartData2 = coordinates.value
+
+
+  chartDataNpsh.datasets[0].data = chartData2
+  optionsNpsh.scales = options2
+
+  // options.plugins = plugins
+}
+
 </script>
 
 <template>
@@ -336,8 +633,31 @@ const { bubbleChartProps } = useBubbleChart({
               <InputNumber v-model="pump.weight" aria-describedby="username-help" />
             </div>
 
-
-
+            <div class="input-group">
+              <label class="input-group__label">Обороты
+              </label>
+              <InputNumber v-model="pump.rpm" inputId="withoutgrouping" />
+            </div>
+            <div class="input-group">
+              <label class="input-group__label">Количество полюсов
+              </label>
+              <InputNumber v-model="pump.pole" inputId="withoutgrouping" />
+            </div>
+            <div class="input-group">
+              <label class="input-group__label">DN
+              </label>
+              <InputNumber v-model="pump.dn" inputId="withoutgrouping" />
+            </div>
+            <div class="input-group">
+              <label class="input-group__label">Фазы двигателя
+              </label>
+              <InputNumber v-model="pump.phase" inputId="withoutgrouping" />
+            </div>
+            <div class="input-group">
+              <label class="input-group__label">Напряжение V
+              </label>
+              <InputNumber v-model="pump.voltage" inputId="withoutgrouping" />
+            </div>
 
             <div class="input-group">
               <label class="input-group__label">Примечание</label>
@@ -572,6 +892,128 @@ const { bubbleChartProps } = useBubbleChart({
 
       <div class="w-full  mt-4 ">
         <BubbleChart class="chart-wrapper" v-bind="bubbleChartProps" />
+      </div>
+    </Fieldset>
+
+
+    <Fieldset legend="График кривой Kw" class="mt-5">
+      <div class="flex flex-col mb-5 max-w-3xl">
+        <label class="input-group__label ">Формула *</label>
+        <Textarea v-model="pump.formuls_kw" autoResize rows="3" cols="30" :class="{ 'p-invalid': errorMessage }" />
+        <p class="mt-2 text-xs text-gray-500">Примечание: знак возведение в степень ** (вместо ^)</p>
+        <p class="text-xs text-gray-500">Пример: -0.0067 * (x**2) - 0.19 * x + 9.41</p>
+
+      </div>
+      <div class="sm:flex gap-5  mt-10 ">
+        <div class="input-group">
+          <label class="input-group__label">Начальная точка *</label>
+          <InputNumber v-model="pump.start_kw" :minFractionDigits="2" inputId="withoutgrouping"
+            :class="{ 'p-invalid': errorMessage }" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Конечная точка *</label>
+          <InputNumber v-model="pump.finish_kw" :minFractionDigits="2" inputId="withoutgrouping"
+            :class="{ 'p-invalid': errorMessage }" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шаг кривой</label>
+          <InputNumber v-model="pump.step_kw" :minFractionDigits="2" inputId="withoutgrouping" />
+        </div>
+      </div>
+      <div class="sm:flex gap-5  mt-5">
+        <div class="input-group">
+          <label class="input-group__label">Шкала Q (м³/ч) (X), минимум</label>
+          <InputNumber v-model="pump.minx_kw" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шкала Q (м³/ч) (X), максимум</label>
+          <InputNumber v-model="pump.maxx_kw" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шаг шкалы Q (м³/ч) (X)</label>
+          <InputNumber v-model="pump.step_x_kw" inputId="withoutgrouping" />
+        </div>
+      </div>
+      <div class="sm:flex gap-5  mt-5 mb-2">
+        <div class="input-group">
+          <label class="input-group__label">Шкала H (м.в.ст.) (Y), минимум</label>
+          <InputNumber v-model="pump.miny_kw" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шкала H (м.в.ст.) (Y), максимум</label>
+          <InputNumber v-model="pump.maxy_kw" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шаг шкалы H (м.в.ст.) (Y)</label>
+          <InputNumber v-model="pump.step_y_kw" inputId="withoutgrouping" />
+        </div>
+      </div>
+      <Button @click="createChartKw" label="Смотреть график" />
+      <div class="w-full  mt-4 ">
+        <BubbleChart class="chart-wrapper" :chartData="chartDataKw" :options="optionsKw" />
+      </div>
+    </Fieldset>
+
+    <Fieldset legend="График кривой NPSH" class="mt-5">
+      <div class="flex flex-col mb-5 max-w-3xl">
+        <label class="input-group__label ">Формула *</label>
+        <Textarea v-model="pump.formuls_npsh" autoResize rows="3" cols="30" :class="{ 'p-invalid': errorMessage }" />
+        <p class="mt-2 text-xs text-gray-500">Примечание: знак возведение в степень ** (вместо ^)</p>
+        <p class="text-xs text-gray-500">Пример: -0.0067 * (x**2) - 0.19 * x + 9.41</p>
+
+      </div>
+      <div class="sm:flex gap-5  mt-10 ">
+        <div class="input-group">
+          <label class="input-group__label">Начальная точка *</label>
+          <InputNumber v-model="pump.start_npsh" :minFractionDigits="2" inputId="withoutgrouping"
+            :class="{ 'p-invalid': errorMessage }" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Конечная точка *</label>
+          <InputNumber v-model="pump.finish_npsh" :minFractionDigits="2" inputId="withoutgrouping"
+            :class="{ 'p-invalid': errorMessage }" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шаг кривой</label>
+          <InputNumber v-model="pump.step_npsh" :minFractionDigits="2" inputId="withoutgrouping" />
+        </div>
+      </div>
+      <div class="sm:flex gap-5  mt-5">
+        <div class="input-group">
+          <label class="input-group__label">Шкала Q (м³/ч) (X), минимум</label>
+          <InputNumber v-model="pump.minx_npsh" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шкала Q (м³/ч) (X), максимум</label>
+          <InputNumber v-model="pump.maxx_npsh" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шаг шкалы Q (м³/ч) (X)</label>
+          <InputNumber v-model="pump.step_x_npsh" inputId="withoutgrouping" />
+        </div>
+      </div>
+      <div class="sm:flex gap-5  mt-5 mb-2">
+        <div class="input-group">
+          <label class="input-group__label">Шкала H (м.в.ст.) (Y), минимум</label>
+          <InputNumber v-model="pump.miny_npsh" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шкала H (м.в.ст.) (Y), максимум</label>
+          <InputNumber v-model="pump.maxy_npsh" inputId="withoutgrouping" />
+        </div>
+        <div class="input-group">
+          <label class="input-group__label">Шаг шкалы H (м.в.ст.) (Y)</label>
+          <InputNumber v-model="pump.step_y_npsh" inputId="withoutgrouping" />
+        </div>
+      </div>
+
+
+
+
+      <Button @click="createChartNpsh" label="Смотреть график" />
+
+      <div class="w-full  mt-4 ">
+        <BubbleChart class="chart-wrapper" :chartData="chartDataNpsh" :options="optionsNpsh" />
       </div>
     </Fieldset>
 

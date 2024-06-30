@@ -42,17 +42,21 @@ export const itemPumpForExel = (el: any, types: IType, i: number) => {
 
   }
 
-  if (el.formuls) {
+  if (el.formuls || el.formuls_kw || el.formuls_npsh) {
     console.log(el.formuls)
 
     let x = 50
     let y = eval(el.formuls)
+    let kw = eval(el.formuls_kw)
+    let npsh = eval(el.formuls_npsh)
     console.log(y)
     try {
   
       let y = eval(el.formuls)
+      let kw = eval(el.formuls_kw)
+    let npsh = eval(el.formuls_npsh)
       console.log(y)
-      if (y == false) {
+      if (y == false || kw == false || npsh == false) {
         errorsMessage.push('Неверная формула')
         isErrors = true
       }
@@ -113,7 +117,36 @@ isErrors = true
   step_y: null,
   weight: null,
   power: null,
-  note: ''
+  note: '',
+  
+
+    rpm: null,
+    pole: null,
+    dn: null,
+    phase: null,
+    voltage: null,
+
+    minx_kw: 0,
+    maxx_kw: 50,
+    miny_kw: 0,
+    maxy_kw: 50,
+    formuls_kw: '',
+    start_kw: null,
+    finish_kw: null,
+    step_kw: 0.2,
+    step_x_kw: null,
+    step_y_kw: null,
+
+    minx_npsh: 0,
+    maxx_npsh: 50,
+    miny_npsh: 0,
+    maxy_npsh: 50,
+    formuls_npsh: '',
+    start_npsh: null,
+    finish_npsh: null,
+    step_npsh: 0.2,
+    step_x_npsh: null,
+    step_y_npsh: null,
       }
       
       
@@ -157,8 +190,35 @@ isErrors = true
       pumpElement.step_y = el.step_y ?? 10
       pumpElement.weight=  el.weight ?? null
       pumpElement.power=  el.power ?? null  
-      pumpElement.note=  el.note ?? ""  
+  pumpElement.note = el.note ?? ""  
 
-    
+  pumpElement.rpm=  el.rpm ?? null  
+  pumpElement.pole=  el.pole ?? null  
+pumpElement.dn=  el.dn ?? null  
+  pumpElement.phase = el.phase ?? null  
+  pumpElement.voltage = el.voltage ?? null 
+  
+   pumpElement.minx_kw= el.minx_kw ?? 0
+      pumpElement.maxx_kw= el.maxx_kw ?? 50
+      pumpElement.miny_kw= el.miny_kw ?? 0
+      pumpElement.maxy_kw= el.maxy_kw ?? 50
+      pumpElement.formuls_kw=  el.formuls_kw ?? "x*1"
+      pumpElement.start_kw=  el.start_kw ?? 0
+      pumpElement.finish_kw=  el.finish_kw ?? 0
+      pumpElement.step_kw= el.step_kw ?? 0.2
+      pumpElement.step_x_kw = el.step_x_kw ?? 10
+      pumpElement.step_y_kw = el.step_y_kw ?? 10
+  
+       pumpElement.minx_npsh= el.minx_npsh ?? 0
+      pumpElement.maxx_npsh= el.maxx_npsh ?? 50
+      pumpElement.miny_npsh= el.miny_npsh ?? 0
+      pumpElement.maxy_npsh= el.maxy_npsh ?? 50
+      pumpElement.formuls_npsh=  el.formuls_npsh ?? "x*1"
+      pumpElement.start_npsh=  el.start_npsh ?? 0
+      pumpElement.finish_npsh=  el.finish_npsh ?? 0
+      pumpElement.step_npsh= el.step_npsh ?? 0.2
+      pumpElement.step_x_npsh = el.step_x_npsh ?? 10
+      pumpElement.step_y_npsh = el.step_y_npsh ?? 10
+  
       return pumpElement
 }
