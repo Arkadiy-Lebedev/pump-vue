@@ -17,6 +17,7 @@ import { useWidthChart } from '../services/useWidthChart'
 import { useFetchAllPumps } from '../hooks/useFetch'
 import { useDefaultRow } from '../hooks/useDefaultRow'
 import { isSeriesPump } from '../services/helpers'
+import { pdfGenerate } from "../services/pdfGenerate"
 
 interface ITypeCalc {
   image: string,
@@ -28,7 +29,7 @@ console.log(widthChart)
 const useStore = useToastStore()
 
 
-import { pdfGenerate } from "../services/pdfGenerate"
+
 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -71,7 +72,8 @@ const message = reactive({
   title: '',
   text: ''
 })
-
+const xKw = ref<number | null>(null)
+const xNpsh = ref<number | null>(null)
 const pumps = ref<IPumpsAll[]>([])
 const pumpsEvent = ref<IPumpsAll[]>([])
 const pumpsEventModal = ref<IPumpsAll[]>([])
@@ -123,7 +125,7 @@ const resetCharts = () => {
   chartData.datasets[1].data = []
   // @ts-ignore
   options.plugins.annotation.annotations = {
-    line4: {
+    line1: {
       type: 'label',
       width: widthChart?.width,
       height: widthChart?.height,
@@ -443,7 +445,7 @@ const showChartData = (id: number) => {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'H(m)',
+          text: 'H(Kw)',
         },
         min: +itemPump.value.miny_kw.toString(),
           max: +itemPump.value.maxy_kw.toString(),
@@ -502,7 +504,7 @@ const showChartData = (id: number) => {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'H(m)',
+            text: 'H(%)',
           },
           min: +itemPump.value.miny_npsh.toString(),
           max: +itemPump.value.maxy_npsh.toString(),
@@ -920,16 +922,20 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls:string, seriasWQA:
 
 const addWorkPoint = () => {
   const x = workPointSelect.pumpX
+  
 
   chartData.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': workPointSelect.pumpY }]
   options.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(m)', itemPump.value?.formuls, true)
 
   if (isSeriesPump(itemPump.value.name) == "TD") {
+    xKw.value = eval(itemPump.value?.formuls_kw).toFixed(2)
+    xNpsh.value = eval(itemPump.value?.formuls_npsh).toFixed(2)
+
       chartDataKw.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_kw) }]
-  optionsKw.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(m)', itemPump.value?.formuls_kw, false )
+  optionsKw.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(Kw)', itemPump.value?.formuls_kw, false )
 
   chartDataNpsh.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_npsh) }]
-  optionsNpsh.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(m)', itemPump.value?.formuls_npsh, false)
+  optionsNpsh.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(%)', itemPump.value?.formuls_npsh, false)
   }
 
 
@@ -938,9 +944,6 @@ const addWorkPoint = () => {
   pumpSelect.pumpY = workPointSelect.pumpY
 
 }
-
-
-
 
 
 
@@ -1006,7 +1009,7 @@ const chartDataKw = reactive({
       type: "bubble",
       data: [],
       cubicInterpolationMode: "monotone",
-      label: "Кривая работы насоса KW",
+      label: "Питание двигателя KW",
       fill: false,
       borderColor: 'rgb(245, 129, 66)',
       pointBackgroundColor: 'rgb(245, 129, 66)',
@@ -1086,7 +1089,7 @@ const chartDataNpsh = reactive({
       type: "bubble",
       data: [],
       cubicInterpolationMode: "monotone",
-      label: "Кривая работы насоса NPSH",
+      label: "NPSH в рабочей точке",
       fill: false,
       borderColor: 'rgb(11, 41, 230)',
       pointBackgroundColor: 'rgb(11, 41, 230)',
@@ -1223,8 +1226,9 @@ const chartDataNpsh = reactive({
 
         </DataTable>
         <div class="mx-auto max-w-7xl py-6 sm:px-6 mt-10 2xl:max-w-screen-2xl max-w">
-          <div class="flex flex-col lg:flex-row justify-center items-center gap-5">
-            <div id="chart" class="w-full sm:w-1/2 ">
+          <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center  gap-5">
+            <div class="flex flex-col justify-center items-center gap-5 sm:w-1/2">
+              <div id="chart" class="w-full ">
               <BubbleChart class="chart-wrapper" ref="chartRef" v-bind="bubbleChartProps" />
 
               <div>
@@ -1257,14 +1261,16 @@ const chartDataNpsh = reactive({
             </div>
         
        
-              <div id="chartKw" v-if="isShowChartsWQA" class="w-full sm:w-1/2 ">
+              <div id="chartKw" v-if="isShowChartsWQA" class="w-full  ">
               <BubbleChart class="chart-wrapper" :chartData="chartDataKw" :options="optionsKw" />
 
              </div>
-             <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full sm:w-1/2 ">
+             <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full  ">
                 <BubbleChart class="chart-wrapper" :chartData="chartDataNpsh" :options="optionsNpsh" />
 
                </div>
+            </div>
+            
         
              
             <div class=" w-full sm:w-1/2 ">
@@ -1291,63 +1297,88 @@ const chartDataNpsh = reactive({
                     <td>Диаметр выхода</td>
                     <td class="diameter-out">{{ textForNull(itemPump?.diameter) }}</td>
                   </tr>
-                  <tr>
-                    <td colspan="2">КПД (%)</td>
-                    <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
+
+                  <tr v-if="itemPump?.efficiency">
+                      <td colspan="2">КПД (%)</td>
+                      <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
+                    </tr>
+                  <tr v-if="itemPump?.formuls_kw">
+                    <td colspan="2">Питание двигателя в рабочей точке, кВт</td>
+                    <td class="efficiency-out">{{ xKw }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.formuls_npsh">
+                    <td colspan="2">NPSH в рабочей точке</td>
+                    <td class="efficiency-out">{{ xNpsh }}</td>
+                  </tr>
+                  <tr v-if="itemPump?.power">
                     <td colspan="2">Мощность (кВт)</td>
                     <td class="power-out">{{ textForNull(itemPump?.power) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.speed">
                     <td colspan="2">Скорость вращения вала (rpm)</td>
                     <td class="speed-out">{{ textForNull(itemPump?.speed) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.frequency">
                     <td colspan="2">Частота переменного тока (Hz)</td>
                     <td class="frequency-out">{{ textForNull(itemPump?.frequency) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.phase">
                     <td colspan="2">Количество фаз</td>
                     <td class="phase-out">{{ textForNull(itemPump?.phase) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.pole">
                     <td colspan="2">Количество полюсов</td>
                     <td class="pole-out">{{ textForNull(itemPump?.pole) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.voltage">
                     <td colspan="2">Номинальное напряжение, V</td>
                     <td class="voltage-out">{{ textForNull(itemPump?.voltage) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.launch">
                     <td colspan="2">Способ запуска</td>
                     <td class="launch-out">{{ textForNull(itemPump?.launch) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.seal">
                     <td colspan="2">Торцевое уплотнение</td>
                     <td class="seal-out">{{ textForNull(itemPump?.seal) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.shaft_standart">
                     <td colspan="2">Материал вала</td>
                     <td class="shaft-out">{{ textForNull(itemPump?.shaft_standart) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.wheel_standart">
                     <td colspan="2">Материал насоса и рабочего колеса</td>
                     <td class="pump-out">{{ textForNull(itemPump?.wheel_standart) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.bar">
                     <td colspan="2">Рабочее давление, бар</td>
                     <td class="bar-out">{{ textForNull(itemPump?.bar) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.current_strength">
                     <td colspan="2">Номинальная сила тока, А</td>
                     <td class="strength-out">{{ textForNull(itemPump?.current_strength) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.ip">
                     <td colspan="2">Степень защиты, IP</td>
                     <td class="ip-out">{{ textForNull(itemPump?.ip) }}</td>
                   </tr>
-                  <tr>
+                  <tr v-if="itemPump?.bolt">
+                      <td colspan="2">Болт</td>
+                      <td class="ip-out">{{ textForNull(itemPump?.bolt) }}</td>
+                    </tr>
+                    <tr v-if="itemPump?.coupling">
+                      <td colspan="2">Муфта</td>
+                      <td class="ip-out">{{ textForNull(itemPump?.coupling) }}</td>
+                    </tr>
+                    <tr v-if="itemPump?.rpm">
+                      <td colspan="2">Обороты</td>
+                      <td class="ip-out">{{ textForNull(itemPump?.rpm) }}</td>
+                    </tr>
+                    <tr v-if="itemPump?.dn">
+                        <td colspan="2">Диаметр выпускного коллектора, DN</td>
+                        <td class="ip-out">{{ textForNull(itemPump?.dn) }}</td>
+                      </tr>
+                  <tr v-if="itemPump?.weight">
                     <td colspan="2">Вес</td>
                     <td class="weight-out">{{ textForNull(itemPump?.weight) }}</td>
                   </tr>

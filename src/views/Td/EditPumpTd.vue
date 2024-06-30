@@ -329,7 +329,7 @@ const optionsKw = reactive({
       beginAtZero: true,
       title: {
         display: true,
-        text: 'H(m) (Y)',
+        text: 'H(Kw) (Y)',
       },
       min: 0,
       max: 50,
@@ -351,7 +351,7 @@ const optionsKw = reactive({
       caretPadding: 10,
       callbacks: {
         label: function (context: any) {
-          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} Kw`
           return label
         }
       }
@@ -366,7 +366,7 @@ const chartDataKw = reactive({
       type: "bubble",
       data: pump.coordinates,
       cubicInterpolationMode: "monotone",
-      label: "Кривая работы насоса",
+      label: "Кривая работы насоса Kw",
       fill: false,
       borderColor: 'rgb(245, 129, 66)',
       pointBackgroundColor: 'rgb(245, 129, 66)',
@@ -383,7 +383,7 @@ const optionsNpsh = reactive({
       beginAtZero: true,
       title: {
         display: true,
-        text: 'H(m) (Y)',
+        text: 'H(%) (Y)',
       },
       min: 0,
       max: 50,
@@ -405,7 +405,7 @@ const optionsNpsh = reactive({
       caretPadding: 10,
       callbacks: {
         label: function (context: any) {
-          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} %`
           return label
         }
       }
@@ -420,7 +420,7 @@ const chartDataNpsh = reactive({
       type: "bubble",
       data: pump.coordinates,
       cubicInterpolationMode: "monotone",
-      label: "Кривая работы насоса",
+      label: "Кривая работы насоса NPSH",
       fill: false,
       borderColor: 'rgb(11, 41, 230)',
       pointBackgroundColor: 'rgb(11, 41, 230)',
@@ -568,7 +568,7 @@ const createChartKw = () => {
       beginAtZero: true,
       title: {
         display: true,
-        text: 'H(m) (Y)',
+        text: 'H(Kw) (Y)',
       },
       min: pump.miny_kw,
       max: pump.maxy_kw,
@@ -647,7 +647,7 @@ const createChartNpsh = () => {
       beginAtZero: true,
       title: {
         display: true,
-        text: 'H(m) (Y)',
+        text: 'H(%) (Y)',
       },
       min: pump.miny_npsh,
       max: pump.maxy_npsh,
