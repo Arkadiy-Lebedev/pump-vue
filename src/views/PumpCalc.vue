@@ -18,6 +18,7 @@ import { useFetchAllPumps } from '../hooks/useFetch'
 import { useDefaultRow } from '../hooks/useDefaultRow'
 import { isSeriesPump } from '../services/helpers'
 import { pdfGenerate } from "../services/pdfGenerate"
+import { pdfGenerateKw } from "../services/pdfGenerateKw"
 
 interface ITypeCalc {
   image: string,
@@ -145,8 +146,8 @@ const newarray = ref<IPumpsAll[] | []>([])
 
 const findPump = () => {
   isShowChartsWQA.value = false
-workPointSelect.pumpX = pumpSelect.pumpX
- workPointSelect.pumpY =   pumpSelect.pumpY
+  workPointSelect.pumpX = pumpSelect.pumpX
+  workPointSelect.pumpY = pumpSelect.pumpY
 
   resetCharts()
 
@@ -343,7 +344,7 @@ const showChartDataInModal = (id: number) => {
   workPointSelect.pumpX = null
   workPointSelect.pumpY = null
 
-    chartDataKw.datasets[1].data = []
+  chartDataKw.datasets[1].data = []
   // @ts-ignore
   optionsKw.plugins.annotation.annotations = reset
   chartDataNpsh.datasets[1].data = []
@@ -381,14 +382,14 @@ const showChartData = (id: number) => {
     coordinates.value = []
     coordinatesKw.value = []
     coordinatesNpsh.value = []
- 
+
 
     if (itemPump.value && itemPump.value.start && itemPump.value.finish) {
       for (let i = +itemPump.value.start; i < +itemPump.value.finish; i = i + +itemPump.value.step) {
 
         try {
           let y = eval(itemPump.value.formuls.replace(/x/g, i.toString()))
-        
+
           coordinates.value.push({
             x: +i.toFixed(2),
             y: +y.toFixed(2),
@@ -441,33 +442,34 @@ const showChartData = (id: number) => {
 
       }
 
-      optionsKw.scales = {y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'H(Kw)',
-        },
-        min: +itemPump.value.miny_kw.toString(),
+      optionsKw.scales = {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Kw',
+          },
+          min: +itemPump.value.miny_kw.toString(),
           max: +itemPump.value.maxy_kw.toString(),
-            ticks: {
-        // @ts-ignore
-        stepSize: itemPump.value.step_y_kw != "---" ? itemPump.value.step_y_kw : '10'
-      }
-    },
-    x: {
-      beginAtZero: true,
-        title: {
-        display: true,
-          text: 'Q(м³/h)',
-        },
-      min: +itemPump.value.minx_kw.toString(),
-        max: +itemPump.value.maxx_kw.toString(),
           ticks: {
-        // @ts-ignore
-        stepSize: itemPump.value.step_x_kw != "---" ? itemPump.value.step_x_kw : '10'
+            // @ts-ignore
+            stepSize: itemPump.value.step_y_kw != "---" ? itemPump.value.step_y_kw : '10'
+          }
+        },
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Q(м³/h)',
+          },
+          min: +itemPump.value.minx_kw.toString(),
+          max: +itemPump.value.maxx_kw.toString(),
+          ticks: {
+            // @ts-ignore
+            stepSize: itemPump.value.step_x_kw != "---" ? itemPump.value.step_x_kw : '10'
+          }
+        }
       }
-    }
-  }
       chartDataKw.datasets[0].data = coordinatesKw
 
       if (itemPump.value && itemPump.value.start_npsh && itemPump.value.finish_npsh) {
@@ -499,12 +501,12 @@ const showChartData = (id: number) => {
       }
 
 
-        optionsNpsh.scales = {
+      optionsNpsh.scales = {
         y: {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'H(%)',
+            text: 'NPSH(%)',
           },
           min: +itemPump.value.miny_npsh.toString(),
           max: +itemPump.value.maxy_npsh.toString(),
@@ -530,7 +532,7 @@ const showChartData = (id: number) => {
       chartDataNpsh.datasets[0].data = coordinatesNpsh
 
 
-      
+
     }
 
     console.log(itemPump)
@@ -785,16 +787,34 @@ const downloadPdf = async () => {
 
 
     loadingPdf.value = true
-    let canvas = document.getElementById('bubble-chart')
+    let canvas: HTMLElement | null = document.getElementById('bubble-chart')
     // @ts-ignore
-    let docinfo = pdfGenerate(itemPump, pumpSelect, date, canvas.toDataURL())
+ let docinfo = null
+    
+    if (isSeriesPump(itemPump.value.name) == "WQA") {
+      if (canvas) {
+         docinfo = pdfGenerate(itemPump, pumpSelect, date, canvas.toDataURL())
+      }
+     
+    }
+    if (isSeriesPump(itemPump.value.name) == "TD") {
+      console.log(456)
+       let canvasNpsh: HTMLElement | null = document.querySelector('#chartNpsh canvas')
+      if (canvas && canvasNpsh) {
+ docinfo = pdfGenerateKw(itemPump, pumpSelect, date, canvas.toDataURL(), xNpsh.value, xKw.value, canvasNpsh.toDataURL())
+      }   
+    }
 
-    pdfmake.createPdf(docinfo).download(`Волга ${itemPump.value.name}.pdf`)
+    if (docinfo) {
+       pdfmake.createPdf(docinfo).download(`Волга ${itemPump.value.name}.pdf`)
       .then(() => {
         loadingPdf.value = false
         options.plugins.annotation.annotations.line1.opacity = 0.1
       })
-
+    } else {
+        loadingPdf.value = false
+        options.plugins.annotation.annotations.line1.opacity = 0.1
+    }
 
 
   }, 300)
@@ -866,7 +886,7 @@ const valueWithRowNumbersModal = computed(() => {
 })
 
 // workPointSelect.pumpY
-const getOptionsForWorkPoint = (q: string, h: string, formuls:string, seriasWQA: boolean) => {
+const getOptionsForWorkPoint = (q: string, h: string, formuls: string, seriasWQA: boolean) => {
   const x = workPointSelect.pumpX
   return {
     line1: {
@@ -892,7 +912,7 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls:string, seriasWQA:
     line3: {
       type: 'label',
       // @ts-ignore
-      xValue: workPointSelect.pumpX ,
+      xValue: workPointSelect.pumpX,
       // @ts-ignore
       yValue: seriasWQA ? workPointSelect.pumpY : eval(formuls.toString()),
       yAdjust: -30,
@@ -922,7 +942,7 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls:string, seriasWQA:
 
 const addWorkPoint = () => {
   const x = workPointSelect.pumpX
-  
+
 
   chartData.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': workPointSelect.pumpY }]
   options.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(m)', itemPump.value?.formuls, true)
@@ -931,15 +951,15 @@ const addWorkPoint = () => {
     xKw.value = eval(itemPump.value?.formuls_kw).toFixed(2)
     xNpsh.value = eval(itemPump.value?.formuls_npsh).toFixed(2)
 
-      chartDataKw.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_kw) }]
-  optionsKw.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(Kw)', itemPump.value?.formuls_kw, false )
+    chartDataKw.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_kw) }]
+    optionsKw.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(Kw)', itemPump.value?.formuls_kw, false)
 
-  chartDataNpsh.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_npsh) }]
-  optionsNpsh.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(%)', itemPump.value?.formuls_npsh, false)
+    chartDataNpsh.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_npsh) }]
+    optionsNpsh.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(%)', itemPump.value?.formuls_npsh, false)
   }
 
 
-  
+
   pumpSelect.pumpX = workPointSelect.pumpX
   pumpSelect.pumpY = workPointSelect.pumpY
 
@@ -950,7 +970,7 @@ const addWorkPoint = () => {
 
 
 const optionsKw = reactive({
-  aspectRatio: 1,
+  aspectRatio: 2,
   scales: {
     y: {
       beginAtZero: true,
@@ -978,26 +998,46 @@ const optionsKw = reactive({
       caretPadding: 10,
       callbacks: {
         label: function (context: any) {
-          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} Kw`
           return label
         }
       }
     },
-     annotation: {
-    annotations: {
-      line1: {
-        type: 'label',
-        width: widthChart?.width,
-        height: widthChart?.height,
-        content: getImage(),
-        font: {
-          size: 60,
-        },
+    annotation: {
+      annotations: {
+        line1: {
+          type: 'label',
+          width: widthChart?.width,
+          height: widthChart?.height,
+          content: getImage(),
+          font: {
+            size: 60,
+          },
 
-        opacity: 0.1
-      },
-    }
-  }
+          opacity: 0.1
+        },
+      }
+    },
+       legend: {
+      // @ts-ignore
+      onClick: function (even, legendItem, legend) {
+        const index = legendItem.datasetIndex
+        const ci = legend.chart
+        if (legendItem.text != "Рабочая точка") {
+          if (ci.isDatasetVisible(index)) {
+            ci.hide(index)
+            legendItem.hidden = true
+          } else {
+            ci.show(index)
+            legendItem.hidden = false
+          }
+        } else {
+          return null
+        }
+        return null
+
+      }
+    },
   },
 
 })
@@ -1017,7 +1057,7 @@ const chartDataKw = reactive({
       spanGaps: true,
       order: 2,
     },
-      {
+    {
       label: 'Рабочая точка',
       data: [],
       borderColor: 'red',
@@ -1030,7 +1070,7 @@ const chartDataKw = reactive({
 })
 
 const optionsNpsh = reactive({
-  aspectRatio: 1,
+  aspectRatio: 2,
   scales: {
     y: {
       beginAtZero: true,
@@ -1058,26 +1098,46 @@ const optionsNpsh = reactive({
       caretPadding: 10,
       callbacks: {
         label: function (context: any) {
-          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} м.в.ст.`
+          let label = `Q=${context.parsed.x} м³/ч, H=${context.parsed.y} %`
           return label
         }
       }
     },
-      annotation: {
-    annotations: {
-      line1: {
-        type: 'label',
-        width: widthChart?.width,
-        height: widthChart?.height,
-        content: getImage(),
-        font: {
-          size: 60,
-        },
+    annotation: {
+      annotations: {
+        line1: {
+          type: 'label',
+          width: widthChart?.width,
+          height: widthChart?.height,
+          content: getImage(),
+          font: {
+            size: 60,
+          },
 
-        opacity: 0.1
-      },
-    }
-  },
+          opacity: 0.1
+        },
+      }
+    },
+       legend: {
+      // @ts-ignore
+      onClick: function (even, legendItem, legend) {
+        const index = legendItem.datasetIndex
+        const ci = legend.chart
+        if (legendItem.text != "Рабочая точка") {
+          if (ci.isDatasetVisible(index)) {
+            ci.hide(index)
+            legendItem.hidden = true
+          } else {
+            ci.show(index)
+            legendItem.hidden = false
+          }
+        } else {
+          return null
+        }
+        return null
+
+      }
+    },
   },
 
 })
@@ -1097,7 +1157,7 @@ const chartDataNpsh = reactive({
       spanGaps: true,
       order: 2,
     },
-      {
+    {
       label: 'Рабочая точка',
       data: [],
       borderColor: 'red',
@@ -1229,50 +1289,49 @@ const chartDataNpsh = reactive({
           <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center  gap-5">
             <div class="flex flex-col justify-center items-center gap-5 sm:w-1/2">
               <div id="chart" class="w-full ">
-              <BubbleChart class="chart-wrapper" ref="chartRef" v-bind="bubbleChartProps" />
+                
+                <div>
+                  <div v-if="isWorkPointBlock" class="mb-10">
+                    <div class="flex justify-center items-center gap-5">
+                      <label>Расход (Q)
+                      </label>
+                      <InputGroup class=" w-48 sm:w-60">
+                        <InputNumber v-model="workPointSelect.pumpX" :minFractionDigits="1" inputId="withoutgrouping" />
+                        <InputGroupAddon class=" w-16">м³/ч</InputGroupAddon>
+                      </InputGroup>
 
-              <div>
-                <div v-if="isWorkPointBlock">
-                  <div class="flex justify-center items-center gap-5 mt-5">
-                    <label>Расход (Q)
-                    </label>
-                    <InputGroup class=" w-48 sm:w-60">
-                      <InputNumber v-model="workPointSelect.pumpX" :minFractionDigits="1" inputId="withoutgrouping" />
-                      <InputGroupAddon class=" w-16">м³/ч</InputGroupAddon>
-                    </InputGroup>
+                    </div>
+                    <div class="flex justify-center items-center gap-5 mt-5">
+                      <label>Напор (H)
+                      </label>
+                      <InputGroup class=" w-48 sm:w-60">
+                        <InputNumber v-model="workPointSelect.pumpY" :minFractionDigits="1" inputId="withoutgrouping" />
+                        <InputGroupAddon class=" w-16">м.в.ст.</InputGroupAddon>
+                      </InputGroup>
+                    </div>
+                    <div class="flex justify-center items-center gap-5 mt-5">
+                      <Button class=" w-full sm:w-1/3" @click="addWorkPoint" label="НАНЕСТИ ТОЧКУ" />
+                    </div>
 
                   </div>
-                  <div class="flex justify-center items-center gap-5 mt-5">
-                    <label>Напор (H)
-                    </label>
-                    <InputGroup class=" w-48 sm:w-60">
-                      <InputNumber v-model="workPointSelect.pumpY" :minFractionDigits="1" inputId="withoutgrouping" />
-                      <InputGroupAddon class=" w-16">м.в.ст.</InputGroupAddon>
-                    </InputGroup>
-                  </div>
-                  <div class="flex justify-center items-center gap-5 mt-5">
-                    <Button class=" w-full sm:w-1/3" @click="addWorkPoint" label="НАНЕСТИ ТОЧКУ" />
-                  </div>
-
                 </div>
+  <BubbleChart class="chart-wrapper" ref="chartRef" v-bind="bubbleChartProps" />
+
               </div>
 
 
-            </div>
-        
-       
               <div id="chartKw" v-if="isShowChartsWQA" class="w-full  ">
-              <BubbleChart class="chart-wrapper" :chartData="chartDataKw" :options="optionsKw" />
+                <BubbleChart class="chart-wrapper2" :chartData="chartDataKw" :options="optionsKw" />
 
-             </div>
-             <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full  ">
-                <BubbleChart class="chart-wrapper" :chartData="chartDataNpsh" :options="optionsNpsh" />
+              </div>
+              <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full  ">
+                <BubbleChart class="chart-wrapper2" :chartData="chartDataNpsh" :options="optionsNpsh" />
 
-               </div>
+              </div>
             </div>
-            
-        
-             
+
+
+
             <div class=" w-full sm:w-1/2 ">
               <table class="table">
                 <tbody>
@@ -1299,16 +1358,16 @@ const chartDataNpsh = reactive({
                   </tr>
 
                   <tr v-if="itemPump?.efficiency">
-                      <td colspan="2">КПД (%)</td>
-                      <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
-                    </tr>
+                    <td colspan="2">КПД (%)</td>
+                    <td class="efficiency-out">{{ textForNull(itemPump?.efficiency) }}</td>
+                  </tr>
                   <tr v-if="itemPump?.formuls_kw">
                     <td colspan="2">Питание двигателя в рабочей точке, кВт</td>
-                    <td class="efficiency-out">{{ xKw }}</td>
+                    <td class="efficiency-out">{{ textForNull(xKw) }}</td>
                   </tr>
                   <tr v-if="itemPump?.formuls_npsh">
                     <td colspan="2">NPSH в рабочей точке</td>
-                    <td class="efficiency-out">{{ xNpsh }}</td>
+                    <td class="efficiency-out">{{ textForNull(xNpsh) }}</td>
                   </tr>
                   <tr v-if="itemPump?.power">
                     <td colspan="2">Мощность (кВт)</td>
@@ -1363,21 +1422,21 @@ const chartDataNpsh = reactive({
                     <td class="ip-out">{{ textForNull(itemPump?.ip) }}</td>
                   </tr>
                   <tr v-if="itemPump?.bolt">
-                      <td colspan="2">Болт</td>
-                      <td class="ip-out">{{ textForNull(itemPump?.bolt) }}</td>
-                    </tr>
-                    <tr v-if="itemPump?.coupling">
-                      <td colspan="2">Муфта</td>
-                      <td class="ip-out">{{ textForNull(itemPump?.coupling) }}</td>
-                    </tr>
-                    <tr v-if="itemPump?.rpm">
-                      <td colspan="2">Обороты</td>
-                      <td class="ip-out">{{ textForNull(itemPump?.rpm) }}</td>
-                    </tr>
-                    <tr v-if="itemPump?.dn">
-                        <td colspan="2">Диаметр выпускного коллектора, DN</td>
-                        <td class="ip-out">{{ textForNull(itemPump?.dn) }}</td>
-                      </tr>
+                    <td colspan="2">Болт</td>
+                    <td class="ip-out">{{ textForNull(itemPump?.bolt) }}</td>
+                  </tr>
+                  <tr v-if="itemPump?.coupling">
+                    <td colspan="2">Муфта</td>
+                    <td class="ip-out">{{ textForNull(itemPump?.coupling) }}</td>
+                  </tr>
+                  <tr v-if="itemPump?.rpm">
+                    <td colspan="2">Обороты</td>
+                    <td class="ip-out">{{ textForNull(itemPump?.rpm) }}</td>
+                  </tr>
+                  <tr v-if="itemPump?.dn">
+                    <td colspan="2">Диаметр выпускного коллектора, DN</td>
+                    <td class="ip-out">{{ textForNull(itemPump?.dn) }}</td>
+                  </tr>
                   <tr v-if="itemPump?.weight">
                     <td colspan="2">Вес</td>
                     <td class="weight-out">{{ textForNull(itemPump?.weight) }}</td>
@@ -1548,6 +1607,11 @@ const chartDataNpsh = reactive({
   aspect-ratio: 1 / 1;
 }
 
+.chart-wrapper2 {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+}
+
 .table {
   border: 1px solid #eee;
   table-layout: fixed;
@@ -1633,4 +1697,5 @@ const chartDataNpsh = reactive({
     width: 100%;
 
   }
-}</style>
+}
+</style>

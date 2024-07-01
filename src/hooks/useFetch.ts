@@ -10,7 +10,9 @@ export const useFetchAllPumps = async () => {
     try {
         const response = await fetch(`${API}/api/pump-cdlf/read.php`)
         const json = await response.json()
-        data.value.push(...json.data)  
+        if (json.data) {
+        data.value.push(...json.data) 
+        }         
     } catch (err) {
         error.value = err  
     } finally {
@@ -19,8 +21,11 @@ export const useFetchAllPumps = async () => {
     
        try {
         const response = await fetch(`${API}/api/pump-td/read.php`)
-        const json = await response.json()
-        data.value.push(...json.data)    
+           const json = await response.json()
+           if (json.data) {
+              data.value.push(...json.data)     
+           }
+        
     } catch (err) {
         error.value = err  
     } finally {
@@ -29,8 +34,11 @@ export const useFetchAllPumps = async () => {
 
      try {
         const response = await fetch(`${API}/api/pump/read.php`)
-        const json = await response.json()
-       data.value.push(...json.data)    
+         const json = await response.json()
+         if (json.data) {
+             data.value.push(...json.data)  
+         }
+         
     } catch (err) {
         error.value = err  
     } finally {
