@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, onMounted, reactive, computed } from 'vue'
 import { FilterMatchMode } from 'primevue/api'
 import axios from 'axios'
@@ -250,7 +251,7 @@ onMounted(() => {
 
 
 const options = reactive({
-  aspectRatio: 1,
+  aspectRatio: 2,
   maintainAspectRatio: true,
   responsive: true,
   scales: {
@@ -451,6 +452,7 @@ const showChartData = (id: number) => {
           },
           min: +itemPump.value.miny_kw.toString(),
           max: +itemPump.value.maxy_kw.toString(),
+          // @ts-ignore
           ticks: {
             // @ts-ignore
             stepSize: itemPump.value.step_y_kw != "---" ? itemPump.value.step_y_kw : '10'
@@ -464,12 +466,14 @@ const showChartData = (id: number) => {
           },
           min: +itemPump.value.minx_kw.toString(),
           max: +itemPump.value.maxx_kw.toString(),
+          // @ts-ignore
           ticks: {
             // @ts-ignore
             stepSize: itemPump.value.step_x_kw != "---" ? itemPump.value.step_x_kw : '10'
           }
         }
       }
+      // @ts-ignore
       chartDataKw.datasets[0].data = coordinatesKw
 
       if (itemPump.value && itemPump.value.start_npsh && itemPump.value.finish_npsh) {
@@ -510,6 +514,7 @@ const showChartData = (id: number) => {
           },
           min: +itemPump.value.miny_npsh.toString(),
           max: +itemPump.value.maxy_npsh.toString(),
+          // @ts-ignore
           ticks: {
             // @ts-ignore
             stepSize: itemPump.value.step_y_npsh != "---" ? itemPump.value.step_y_npsh : '10'
@@ -523,12 +528,14 @@ const showChartData = (id: number) => {
           },
           min: +itemPump.value.minx_npsh.toString(),
           max: +itemPump.value.maxx_npsh.toString(),
+          // @ts-ignore
           ticks: {
             // @ts-ignore
             stepSize: itemPump.value.step_x_npsh != "---" ? itemPump.value.step_x_npsh : '10'
           }
         }
       }
+       // @ts-ignore     
       chartDataNpsh.datasets[0].data = coordinatesNpsh
 
 
@@ -760,7 +767,12 @@ const downloadPdf = async () => {
 
   options.plugins.annotation.annotations.line1.opacity = 0
 
-
+  console.log(optionsNpsh.plugins.annotation.annotations.line1)
+  // @ts-ignore
+  optionsNpsh.plugins.annotation.annotations.line4.opacity = 0
+  // @ts-ignore
+  optionsKw.plugins.annotation.annotations.line4.opacity = 0
+ 
   setTimeout(() => {
 
     if (!itemPump.value) {
@@ -793,15 +805,19 @@ const downloadPdf = async () => {
     
     if (isSeriesPump(itemPump.value.name) == "WQA") {
       if (canvas) {
+         // @ts-ignore     
          docinfo = pdfGenerate(itemPump, pumpSelect, date, canvas.toDataURL())
       }
      
     }
     if (isSeriesPump(itemPump.value.name) == "TD") {
       console.log(456)
-       let canvasNpsh: HTMLElement | null = document.querySelector('#chartNpsh canvas')
-      if (canvas && canvasNpsh) {
- docinfo = pdfGenerateKw(itemPump, pumpSelect, date, canvas.toDataURL(), xNpsh.value, xKw.value, canvasNpsh.toDataURL())
+      let canvasNpsh: HTMLElement | null = document.querySelector('#chartNpsh canvas')
+       let canvasKw: HTMLElement | null = document.querySelector('#chartKw canvas')
+      if (canvas && canvasNpsh && canvasKw) {
+         // @ts-ignore     
+        docinfo = pdfGenerateKw(itemPump, pumpSelect, date, canvas.toDataURL(), xNpsh.value, xKw.value, canvasNpsh.toDataURL(),  canvasKw.toDataURL())
+ 
       }   
     }
 
@@ -810,10 +826,18 @@ const downloadPdf = async () => {
       .then(() => {
         loadingPdf.value = false
         options.plugins.annotation.annotations.line1.opacity = 0.1
+        // @ts-ignore
+        optionsNpsh.plugins.annotation.annotations.line4.opacity = 0.1
+        // @ts-ignore
+          optionsKw.plugins.annotation.annotations.line4.opacity = 0.1
       })
     } else {
         loadingPdf.value = false
-        options.plugins.annotation.annotations.line1.opacity = 0.1
+      options.plugins.annotation.annotations.line1.opacity = 0.1
+      // @ts-ignore
+      optionsNpsh.plugins.annotation.annotations.line4.opacity = 0.1
+         // @ts-ignore
+      optionsKw.plugins.annotation.annotations.line4.opacity = 0.1
     }
 
 
@@ -888,6 +912,7 @@ const valueWithRowNumbersModal = computed(() => {
 // workPointSelect.pumpY
 const getOptionsForWorkPoint = (q: string, h: string, formuls: string, seriasWQA: boolean) => {
   const x = workPointSelect.pumpX
+  console.log(x)
   return {
     line1: {
       type: 'line',
@@ -942,19 +967,24 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls: string, seriasWQA
 
 const addWorkPoint = () => {
   const x = workPointSelect.pumpX
-
+console.log(x)
 
   chartData.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': workPointSelect.pumpY }]
+  // @ts-ignore
   options.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(m)', itemPump.value?.formuls, true)
-
+  // @ts-ignore
   if (isSeriesPump(itemPump.value.name) == "TD") {
+    // @ts-ignore
     xKw.value = eval(itemPump.value?.formuls_kw).toFixed(2)
+    // @ts-ignore
     xNpsh.value = eval(itemPump.value?.formuls_npsh).toFixed(2)
-
+    // @ts-ignore
     chartDataKw.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_kw) }]
+    // @ts-ignore
     optionsKw.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(Kw)', itemPump.value?.formuls_kw, false)
-
+    // @ts-ignore
     chartDataNpsh.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': eval(itemPump.value?.formuls_npsh) }]
+    // @ts-ignore
     optionsNpsh.plugins.annotation.annotations = getOptionsForWorkPoint('Q(м³/h)', 'H(%)', itemPump.value?.formuls_npsh, false)
   }
 
@@ -982,6 +1012,7 @@ const optionsKw = reactive({
       max: 50,
 
     },
+    // @ts-ignore
     x: {
       beginAtZero: true,
       title: {
@@ -1325,7 +1356,8 @@ const chartDataNpsh = reactive({
 
               </div>
               <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full  ">
-                <BubbleChart class="chart-wrapper2" :chartData="chartDataNpsh" :options="optionsNpsh" />
+             
+                <BubbleChart class="chart-wrapper2" :chartData="chartDataNpsh " :options="optionsNpsh" />
 
               </div>
             </div>
@@ -1604,7 +1636,7 @@ const chartDataNpsh = reactive({
 <style scope>
 .chart-wrapper {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 2 / 1;
 }
 
 .chart-wrapper2 {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import axios from 'axios'
 import { onMounted, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
@@ -127,7 +128,7 @@ const pump = reactive<IPumpTd>({
   coupling: '',
   seal_order: '',
   seal: '',
-  d: '',
+  d: null,
   b1: null,
   b2: null,
   b3: null,
@@ -323,7 +324,7 @@ const chartData = reactive({
 
 
 const optionsKw = reactive({
-  aspectRatio: 1,
+  aspectRatio: 2,
   scales: {
     y: {
       beginAtZero: true,
@@ -377,7 +378,7 @@ const chartDataKw = reactive({
 })
 
 const optionsNpsh = reactive({
-  aspectRatio: 1,
+  aspectRatio: 2,
   scales: {
     y: {
       beginAtZero: true,
@@ -862,7 +863,7 @@ const createChartNpsh = () => {
             </div>
             <div class="input-group">
               <label class="input-group__label">B2</label>
-              <InputText v-model="pump.b2" aria-describedby="username-help" />
+              <InputNumber v-model="pump.b2" aria-describedby="username-help" />
             </div>
 
             <div class="input-group">
@@ -884,7 +885,7 @@ const createChartNpsh = () => {
             </div>
             <div class="input-group">
               <label class="input-group__label">H2</label>
-              <InputText v-model="pump.h2" aria-describedby="username-help" />
+              <InputNumber v-model="pump.h2" aria-describedby="username-help" />
             </div>
             <div class="input-group">
               <label class="input-group__label">H3</label>
@@ -1127,7 +1128,7 @@ const createChartNpsh = () => {
 <style>
 .chart-wrapper {
   width: 70%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 2 / 1;
 }
 
 

@@ -1213,7 +1213,7 @@ export const pdfGenerate = (itemPump: any, pumpSelect: any, date: any, canvas: a
                         // @ts-ignore
                         image: canvas,
                         width: 400,
-                        height: 400,
+                        height: 200,
                         alignment: 'center',
                         margin: [0, 5],
                     },],

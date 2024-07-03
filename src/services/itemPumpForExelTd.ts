@@ -93,7 +93,7 @@ isErrors = true
   coupling: '',
   seal_order: '',  
   seal: '',
-  d: '',
+  d: null,
   b1: null,
   b2: null,
   b3: null,

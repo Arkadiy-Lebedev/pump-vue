@@ -420,7 +420,7 @@ const { bubbleChartProps } = useBubbleChart({
             </div>
             <div class="input-group">
               <label class="input-group__label">B1+B2</label>
-              <InputText v-model="pump.b12" aria-describedby="username-help" />
+              <InputNumber v-model="pump.b12" aria-describedby="username-help" />
             </div>
 
             <div class="input-group">

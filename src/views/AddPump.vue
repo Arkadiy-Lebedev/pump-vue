@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import axios from 'axios'
 import { watch, onMounted, reactive, ref } from "vue"
 import type { Ref } from 'vue'

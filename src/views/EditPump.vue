@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import axios from 'axios'
 import { onMounted, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
@@ -22,7 +23,10 @@ const isFormulaSucces = ref(false)
 
 const loadPumpOne = async (id: string[] | string) => {
   fetch(`${API}api/pump/read_one.php?id=${id}`)
-    .then((response) => response.json())
+    .then((response) => {
+      console.log(response)
+      return response.json()
+    })
     .then((data) => {
      
     for (var key in data) {

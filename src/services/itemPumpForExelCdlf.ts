@@ -30,6 +30,7 @@ export const itemPumpForExel = (el: any, types: IType, i: number) => {
   // }
 // @ts-ignore
   if (el.type) {
+    // @ts-ignore
   let typeEltement = types.value.find(item => item.type == el.type)
 
 

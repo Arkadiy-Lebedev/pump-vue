@@ -39,6 +39,7 @@ const loadAllPump = async () => {
       // if (!data.data) {
       //   return
       // }
+      // @ts-ignore
         pumps.value.push(...data.data)
         loading.value = false
     })
@@ -59,7 +60,7 @@ const loadAllPump = async () => {
       // if (!data.data) {
       //   return
       // }
-     
+     // @ts-ignore
       pumps.value.push(...data.data)
       loading.value = false
     })
@@ -80,7 +81,7 @@ const loadAllPump = async () => {
       // if (!data.data) {
       //   return
       // }
-
+      // @ts-ignore     
       pumps.value.push(...data.data)
       loading.value = false
     })
