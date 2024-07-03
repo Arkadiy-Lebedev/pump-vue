@@ -85,3 +85,8 @@ app.component('InputMask', InputMask)
 app.component('Divider', Divider)
 
 app.mount('#app')
+
+
+window.addEventListener('vite:preloadError', () => {
+    window.location.reload();
+  });
