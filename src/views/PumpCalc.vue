@@ -326,21 +326,23 @@ const options = reactive({
 Chart.register(ChartAnnotation, ...registerables)
 
 
+const reset = {
+  line4: {
+    type: 'label',
+    width: widthChart?.width,
+    height: widthChart?.height,
+    content: getImage(),
+    font: {
+      size: 60,
+    },
+
+    opacity: 0.1
+  },
+}
+
 const showChartDataInModal = (id: number) => {
 
-  const reset = {
-    line4: {
-      type: 'label',
-      width: widthChart?.width,
-      height: widthChart?.height,
-      content: getImage(),
-      font: {
-        size: 60,
-      },
-
-      opacity: 0.1
-    },
-  }
+  
   pumpsEvent.value = []
   workPointSelect.pumpX = null
   workPointSelect.pumpY = null
@@ -849,7 +851,8 @@ const downloadPdf = async () => {
 }
 
 
-const allPump = () => {
+const filterChange = (e = null) => {
+  
   if (pumpSelect.type == 'Любой') {
     pumpsEventModal.value = pumps.value
   } else {
@@ -861,6 +864,14 @@ const allPump = () => {
     })
 
   }
+  if (e) {
+     pumpSelect.image = types.value.find(elem => elem.type == e.value).image
+  }
+ 
+}
+
+const allPump = () => {
+  filterChange()
   pumpsModal.value = true
 }
 
@@ -945,7 +956,7 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls: string, seriasWQA
       borderColor: 'rgb(255, 99, 132)',
       borderWidth: 1,
       // borderDash: [5, 5],
-      backgroundColor: 'rgba(255,255,255)',
+      backgroundColor: 'rgba(255,255,255,0.8)',
       content: [`${q} = ${workPointSelect.pumpX}, ${h} = ${seriasWQA ? workPointSelect.pumpY : eval(formuls.toString()).toFixed(2)}`],
       font: {
         size: 12,
@@ -967,7 +978,31 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls: string, seriasWQA
 
 const addWorkPoint = () => {
   const x = workPointSelect.pumpX
-console.log(x)
+  console.log(x)
+
+  if (workPointSelect.pumpX == null || workPointSelect.pumpY == null) {
+    //обнуление графиков
+    chartDataKw.datasets[1].data = []
+    optionsKw.plugins.annotation.annotations = reset
+    chartDataNpsh.datasets[1].data = []
+    optionsNpsh.plugins.annotation.annotations = reset
+      chartData.datasets[1].data = []
+ 
+    options.plugins.annotation.annotations = {
+      line1: {
+        type: 'label',
+        width: widthChart?.width,
+        height: widthChart?.height,
+        content: getImage(),
+        font: {
+          size: 60,
+        },
+
+        opacity: 0.1
+      },
+    }
+    return
+  }
 
   chartData.datasets[1].data = [{ 'x': workPointSelect.pumpX, 'y': workPointSelect.pumpY }]
   // @ts-ignore
@@ -1534,14 +1569,18 @@ const chartDataNpsh = reactive({
       :value="valueWithRowNumbersModal" stripedRows tableStyle="min-width: 50rem">
 
       <template #header>
-        <div class="flex justify-content-end mb-3">
+        <div class="flex flex-col justify-content-end gap-3 sm:flex-row">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
             <InputText v-model="filters['global'].value" placeholder="Поиск" />
           </span>
+          <div >
+                <Dropdown class=" w-72" @change="filterChange" v-model="pumpSelect.type" :options="types" optionLabel="type"
+                  optionValue="type" placeholder="Тип насоса" />
+              </div>
         </div>
         <div style="text-align:left">
-          <p class="mb-2">Выбранные поля:</p>
+          <p class="mb-2 mt-3">Выбранные поля:</p>
           <MultiSelect class="w-full " filter emptyFilterMessage="Не найдено" :modelValue="selectedColumns"
             :options="columns" optionLabel="header" @update:modelValue="onToggle" display="chip"
             placeholder="Выберете столбец" />
