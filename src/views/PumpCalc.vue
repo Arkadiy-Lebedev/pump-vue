@@ -1238,7 +1238,7 @@ const chartDataNpsh = reactive({
 </script>
 
 <template>
-
+ 
   <div class=" relative  flex flex-col h-dvh">
 
     <div class=" grow shrink-0">
