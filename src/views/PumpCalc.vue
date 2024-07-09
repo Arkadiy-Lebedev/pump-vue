@@ -952,7 +952,7 @@ const getOptionsForWorkPoint = (q: string, h: string, formuls: string, seriasWQA
       // @ts-ignore
       yValue: seriasWQA ? workPointSelect.pumpY : eval(formuls.toString()),
       yAdjust: -30,
-      xAdjust: 20,
+      xAdjust: 40,
       borderColor: 'rgb(255, 99, 132)',
       borderWidth: 1,
       // borderDash: [5, 5],
@@ -1238,7 +1238,7 @@ const chartDataNpsh = reactive({
 </script>
 
 <template>
-  {{ workPointSelect.pumpX }}
+
   <div class=" relative  flex flex-col h-dvh">
 
     <div class=" grow shrink-0">
