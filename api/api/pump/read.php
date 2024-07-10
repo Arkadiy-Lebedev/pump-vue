@@ -1,8 +1,5 @@
 <?php
-   echo json_encode([
-      "data" => 456
-         
-  ]);
+
 // необходимые HTTP-заголовки
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
