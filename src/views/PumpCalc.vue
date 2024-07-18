@@ -769,11 +769,16 @@ const downloadPdf = async () => {
 
   options.plugins.annotation.annotations.line1.opacity = 0
 
-  console.log(optionsNpsh.plugins.annotation.annotations.line1)
-  // @ts-ignore
-  optionsNpsh.plugins.annotation.annotations.line4.opacity = 0
-  // @ts-ignore
-  optionsKw.plugins.annotation.annotations.line4.opacity = 0
+if(optionsNpsh.plugins.annotation.annotations.line4){
+  
+optionsNpsh.plugins.annotation.annotations.line4.opacity = 0
+}
+
+if (optionsKw.plugins.annotation.annotations.line4 ){
+    optionsKw.plugins.annotation.annotations.line4.opacity = 0
+}
+
+
  
   setTimeout(() => {
 
@@ -828,18 +833,24 @@ const downloadPdf = async () => {
       .then(() => {
         loadingPdf.value = false
         options.plugins.annotation.annotations.line1.opacity = 0.1
-        // @ts-ignore
-        optionsNpsh.plugins.annotation.annotations.line4.opacity = 0.1
-        // @ts-ignore
+  if( optionsNpsh.plugins.annotation.annotations.line4){
+      optionsNpsh.plugins.annotation.annotations.line4.opacity = 0.1
+  }
+      if(   optionsKw.plugins.annotation.annotations.line4){
           optionsKw.plugins.annotation.annotations.line4.opacity = 0.1
+      }
+   
+        
       })
     } else {
         loadingPdf.value = false
       options.plugins.annotation.annotations.line1.opacity = 0.1
-      // @ts-ignore
+      if( optionsNpsh.plugins.annotation.annotations.line4){
       optionsNpsh.plugins.annotation.annotations.line4.opacity = 0.1
-         // @ts-ignore
-      optionsKw.plugins.annotation.annotations.line4.opacity = 0.1
+  }
+      if(   optionsKw.plugins.annotation.annotations.line4){
+          optionsKw.plugins.annotation.annotations.line4.opacity = 0.1
+      }
     }
 
 
@@ -1385,16 +1396,16 @@ const chartDataNpsh = reactive({
 
               </div>
 
-
-              <div id="chartKw" v-if="isShowChartsWQA" class="w-full  ">
-                <BubbleChart class="chart-wrapper2" :chartData="chartDataKw" :options="optionsKw" />
-
-              </div>
-              <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full  ">
+           <div id="chartNpsh" v-if="isShowChartsWQA" class="w-full  ">
              
                 <BubbleChart class="chart-wrapper2" :chartData="chartDataNpsh " :options="optionsNpsh" />
 
               </div>
+              <div id="chartKw" v-if="isShowChartsWQA" class="w-full  ">
+                <BubbleChart class="chart-wrapper2" :chartData="chartDataKw" :options="optionsKw" />
+
+              </div>
+   
             </div>
 
 

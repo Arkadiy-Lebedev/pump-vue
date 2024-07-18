@@ -50,6 +50,7 @@ export const itemPumpForExel = (el: any, types: IType, i: number) => {
     console.log(el.formuls)
 
     let x = 50
+    console.log(x)
     let y = eval(el.formuls)
     console.log(y)
     try {
