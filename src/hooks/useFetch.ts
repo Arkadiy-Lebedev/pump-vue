@@ -47,6 +47,6 @@ export const useFetchAllPumps = async () => {
 
 
 
-    
+    console.log(data)
     return { data, error, pending }
 }

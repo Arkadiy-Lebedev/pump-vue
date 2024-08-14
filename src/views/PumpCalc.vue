@@ -340,7 +340,7 @@ const reset = {
   },
 }
 
-const showChartDataInModal = (id: number) => {
+const showChartDataInModal = (id: number, name:string) => {
 
   
   pumpsEvent.value = []
@@ -358,12 +358,12 @@ const showChartDataInModal = (id: number) => {
 
 
   // @ts-ignore
-  pumpsEvent.value = [pumps.value.find(el => el.id == id)]
+  pumpsEvent.value = [pumps.value.find(el => el.id == id && el.name == name)]
 
 
   pumpSelect.pumpY = null
   pumpSelect.pumpX = null
-  showChartData(id)
+  showChartData(id, name)
   pumpsModal.value = false
   isWorkPointBlock.value = true
 }
@@ -375,10 +375,14 @@ const showChartDataInModal = (id: number) => {
 //   isShowChartsWQA.value = false
 // }
 
-const showChartData = (id: number) => {
+const showChartData = (id: number, name:string) => {
   isShowChartsWQA.value = false
   // @ts-ignore
-  itemPump.value = pumps.value.find(el => el.id == id)
+  itemPump.value = pumps.value.find(el => el.id == id && el.name == name)
+  console.log(itemPump.value)
+  console.log(id)
+
+ console.log(name)
   if (itemPump.value && itemPump.value.minx && itemPump.value.maxx && itemPump.value.maxy && itemPump.value.miny && pumpSelect) {
 
     orderList.value = `ЗАПРОСИТЬ СЧЕТ НА ${itemPump.value.name}`
@@ -1614,7 +1618,7 @@ const chartDataNpsh = reactive({
       }">
         <template #body="slotProps">
           <p class="cursor-pointer text-blue-700 underline hover:text-blue-900"
-            @click="showChartDataInModal(slotProps.data.id)"> {{
+            @click="showChartDataInModal(slotProps.data.id,  slotProps.data.name)"> {{
               slotProps.data.name }}
           </p>
         </template>
