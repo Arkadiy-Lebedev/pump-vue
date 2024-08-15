@@ -1350,7 +1350,7 @@ const chartDataNpsh = reactive({
           }">
             <template #body="slotProps">
               <a href="#chart" class="cursor-pointer text-blue-700 underline hover:text-blue-900"
-                @click="showChartData(slotProps.data.id)">
+                @click="showChartData(slotProps.data.id, slotProps.data.name)">
                 {{
                   slotProps.data.name }}
               </a>
